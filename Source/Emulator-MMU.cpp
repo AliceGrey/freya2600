@@ -128,7 +128,7 @@ void Emulator::WriteByte(word address, byte data)
     // $00 - $7F TIA 
     // $00-$2C TIA (write)
     // $30-$3D TIA (read)
-    if (address >= 0x00 && address <= 0x3D) {
+    if (address >= 0x00 && address <= 0x2C) {
         switch (address) {
             case VSYNC:
                 printf("WRITE VSYNC\n");  // Write: VSYNC set-clear (D1)
@@ -223,6 +223,10 @@ void Emulator::WriteByte(word address, byte data)
             default:
                 printf("UNDEFINTED WRITE IN TIA AREA 0x%04hX \n", address);
         }
+    }
+
+    if (address >= 0x2D && address <= 0x3F) {
+        printf("ILLEGAL WRITE IN TIA AREA 0x%04hX \n", address);
     }
 
     // RIOT RAM
