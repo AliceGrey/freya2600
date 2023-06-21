@@ -2,7 +2,6 @@
 #define EMULATOR_HPP
 
 #include <cstdint>
-#include <string_view>
 
 typedef uint8_t byte;
 
@@ -58,7 +57,11 @@ public:
 
     byte RAM[0x80];
 
-    byte ROM[0x1000];
+    unsigned ROMBank = 0;
+
+    byte ROM[8][0x1000];
+
+    byte EXTRAM[0x100];
 
     Emulator();
 
@@ -66,19 +69,15 @@ public:
 
     void Reset();
 
-    void LoadCartridge(std::string_view filename);
+    void LoadCartridge(const char * filename);
 
     void Tick();
-
-    void PushWord(word data);
-
-    word PopWord();
 
     byte ReadByte(word address);
 
     void WriteByte(word address, byte data);
 
-    inline byte ReadWord(word address) {
+    inline word ReadWord(word address) {
         byte lower = ReadByte(address);
         byte upper = ReadByte(address + 1);
         return (upper << 8) | lower;
@@ -87,6 +86,16 @@ public:
     inline void WriteWord(word address, word data) {
         WriteByte(address, data & 0x00FF);
         WriteByte(address + 1, (data & 0xFF00) >> 8);
+    }
+
+    inline void PushWord(word data) {
+        WriteWord(SP, data);
+        SP += 2;
+    }
+
+    inline word PopWord() {
+        SP -= 2;
+        return ReadWord(SP);
     }
 
 };

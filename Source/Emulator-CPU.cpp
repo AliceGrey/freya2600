@@ -1,10 +1,11 @@
 #include "Emulator.hpp"
 
+#include <cstdio>
+
 void Emulator::Tick()
 {
     uint8_t opcode = ReadByte(PC);
     ++PC;
-    
 
     switch (opcode) {
         // ADC
@@ -72,11 +73,13 @@ void Emulator::Tick()
             X = X - 1;
             Z = (X == 0);
             N = (X & 0x10);
+            break;
         //DEY (Decrement Index Y by One)
         case 0x88:
             Y = Y - 1;
             Z = (Y == 0);
             N = (Y & 0x10);
+            break;
         //EOR
         //INC
         //INX (Increment Index X by One)
@@ -108,7 +111,13 @@ void Emulator::Tick()
             break;
             
         //LDA
-        //LDX
+        //LDX (Immediate)
+        case 0xA2:
+            X = ReadByte(PC);
+            PC += 1;
+            Z = (X == 0);
+            N = (X & 0x10);
+            break;
         //LDY
         //LSR
         //NOP
@@ -143,6 +152,8 @@ void Emulator::Tick()
         //TXA
         //TXS
         //TYA
-//
+    default:
+        fprintf(stderr, "Unrecognized opcode: %02X\n", opcode);
+        break;
     }
 }

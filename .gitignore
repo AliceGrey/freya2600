@@ -34,3 +34,8 @@
 #cmake woooooo
 .vscode
 /[Bb]uild
+
+#atari stuff
+*.bin
+*.a26
+*.pal
