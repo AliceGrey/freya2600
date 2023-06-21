@@ -28,7 +28,7 @@ bool Emulator::Tick()
              "ORA", "AND", "EOR", "ADC", "STA", "LDA", "CMP", "SBC",
          };
 
-         printf("%s \n", INSTRS[aaa]);
+         //printf("%s \n", INSTRS[aaa]);
         
          const char * ADDR_MODE[] = {
              "Zero Page,X",
@@ -48,7 +48,7 @@ bool Emulator::Tick()
              "ASL", "ROL", "LSR", "ROR", "STX", "LDX", "DEC", "INC",
          };
 
-         printf("%s \n", INSTRS[aaa]);
+         //printf("%s \n", INSTRS[aaa]);
         
          const char * ADDR_MODE[] = {
              "#Immediate",
@@ -68,7 +68,7 @@ bool Emulator::Tick()
              "BIT", "JMP", "JMP?", "STY", "LDY", "CPY", "CPX",
          };
 
-         printf("%s \n", INSTRS[aaa]);
+         //printf("%s \n", INSTRS[aaa]);
         
          const char * ADDR_MODE[] = {
              "#Immediate",

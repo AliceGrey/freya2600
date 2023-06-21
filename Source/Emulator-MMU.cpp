@@ -1,5 +1,7 @@
 #include "Emulator.hpp"
 
+#include <cstdio>
+
 uint8_t Emulator::ReadByte(word address)
 {
     // bit mask
@@ -8,6 +10,8 @@ uint8_t Emulator::ReadByte(word address)
     // $00 - $7F TIA 
     // $00-$2C TIA (write)
     if (address >= 0x00 && address <= 0x2C) {
+        printf("TIA READ 0x%04hX \n", address);
+
         //--------------------------------------------
         //$0000 - $003F = TIA.......(write)......(read)
         //--------------------------------------------
@@ -58,7 +62,8 @@ uint8_t Emulator::ReadByte(word address)
         //$002C = TIA Address $2C - (CXCLR)......(INPT4)
     }
     // $30-$3D TIA (read)
-    if (address >= 0x30 && address <= 0x3D) { 
+    if (address >= 0x30 && address <= 0x3D) {
+        printf("TIA READ 0x%04hX \n", address); 
         //---------------------------------------------
         //$0000 - $003F = TIA.......(write)......(read)
         //---------------------------------------------
@@ -84,6 +89,7 @@ uint8_t Emulator::ReadByte(word address)
     }
     // RIOT (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {
+        printf("RIOT I/O READ 0x%04hX \n", address);
         //$0280 = (RIOT $00) - Read DRA
         //$0281 = (RIOT $01) - Read DDRA
         //$0282 = (RIOT $02) - Read DRB
@@ -158,6 +164,7 @@ void Emulator::WriteByte(word address, byte data)
        // $00 - $7F TIA 
     // $00-$2C TIA (write)
     if (address >= 0x00 && address <= 0x2C) {
+        printf("TIA WRITE 0x%04hX \n", address);
         //--------------------------------------------
         //$0000 - $003F = TIA.......(write)......(read)
         //--------------------------------------------
@@ -209,6 +216,7 @@ void Emulator::WriteByte(word address, byte data)
     }
     // $30-$3D TIA (read)
     if (address >= 0x30 && address <= 0x3D) { 
+        printf("TIA WRITE 0x%04hX \n", address);
         //---------------------------------------------
         //$0000 - $003F = TIA.......(write)......(read)
         //---------------------------------------------
@@ -235,6 +243,7 @@ void Emulator::WriteByte(word address, byte data)
 
     // RIOT (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {
+        printf("RIOT I/O WRITE 0x%04hX \n", address);
         //$0280 = (RIOT $00) - Write DRA
         //$0281 = (RIOT $01) - Write DDRA
         //$0282 = (RIOT $02) - Write DRB
