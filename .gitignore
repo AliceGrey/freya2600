@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+#cmake woooooo
+.vscode
+/[Bb]uild
