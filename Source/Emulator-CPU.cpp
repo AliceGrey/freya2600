@@ -21,67 +21,68 @@ bool Emulator::Tick()
     };
     
     opcode = NextByte();
+    //fprintf(stderr, "Opcode: %02X\n", opcode);
 
-    // if (cc == 0x01) {
-    //     const char * INSTRS[] = { 
-    //         "ORA", "AND", "EOR", "ADC", "STA", "LDA", "CMP", "SBC",
-    //     };
+     if (cc == 0x01) {
+         const char * INSTRS[] = { 
+             "ORA", "AND", "EOR", "ADC", "STA", "LDA", "CMP", "SBC",
+         };
 
-    //     printf("%s ", INSTRS[aaa]);
+         printf("%s \n", INSTRS[aaa]);
         
-    //     const char * ADDR_MODE[] = {
-    //         "Zero Page,X",
-    //         "Zero Page",
-    //         "#Immediate",
-    //         "Absolute",
-    //         "(Zero Page),Y",
-    //         "Zero Page,X",
-    //         "Absolute,Y",
-    //         "Absolute,X"
-    //     };
+         const char * ADDR_MODE[] = {
+             "Zero Page,X",
+             "Zero Page",
+             "#Immediate",
+             "Absolute",
+             "(Zero Page),Y",
+             "Zero Page,X",
+             "Absolute,Y",
+             "Absolute,X"
+         };
         
-    //     printf("%s\n", ADDR_MODE[bbb]);
-    // }
-    // else if (cc == 0x10) {
-    //     const char * INSTRS[] = { 
-    //         "ASL", "ROL", "LSR", "ROR", "STX", "LDX", "DEC", "INC",
-    //     };
+         //printf("%s\n", ADDR_MODE[bbb]);
+     }
+     else if (cc == 0x10) {
+         const char * INSTRS[] = { 
+             "ASL", "ROL", "LSR", "ROR", "STX", "LDX", "DEC", "INC",
+         };
 
-    //     printf("%s ", INSTRS[aaa]);
+         printf("%s \n", INSTRS[aaa]);
         
-    //     const char * ADDR_MODE[] = {
-    //         "#Immediate",
-    //         "Zero Page",
-    //         "Accumulator",
-    //         "Absolute",
-    //         "Zero Page,X",
-    //         "Absolute,X",
-    //         "",
-    //         ""
-    //     };
+         const char * ADDR_MODE[] = {
+             "#Immediate",
+             "Zero Page",
+             "Accumulator",
+             "Absolute",
+             "Zero Page,X",
+            "Absolute,X",
+             "",
+             ""
+         };
         
-    //     printf("%s\n", ADDR_MODE[bbb]);
-    // }
-    // else if (cc == 0x00) {
-    //     const char * INSTRS[] = { 
-    //         "BIT", "JMP", "JMP?", "STY", "LDY", "CPY", "CPX",
-    //     };
+        // printf("%s\n", ADDR_MODE[bbb]);
+     }
+     else if (cc == 0x00) {
+         const char * INSTRS[] = { 
+             "BIT", "JMP", "JMP?", "STY", "LDY", "CPY", "CPX",
+         };
 
-    //     printf("%s ", INSTRS[aaa]);
+         printf("%s \n", INSTRS[aaa]);
         
-    //     const char * ADDR_MODE[] = {
-    //         "#Immediate",
-    //         "Zero Page",
-    //         "Absolute",
-    //         "Zero Page,X",
-    //         "Absolute,X",
-    //         "",
-    //         "",
-    //         ""
-    //     };
+         const char * ADDR_MODE[] = {
+             "#Immediate",
+             "Zero Page",
+             "Absolute",
+             "Zero Page,X",
+             "Absolute,X",
+             "",
+             "",
+             ""
+         };
         
-    //     printf("%s\n", ADDR_MODE[bbb]);
-    // }
+        // printf("%s\n", ADDR_MODE[bbb]);
+     }
 
 
     // printf("Addressing Mode: %s\n", ADDR_MODE[bbb]);
