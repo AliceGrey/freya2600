@@ -71,7 +71,7 @@ public:
 
     void LoadCartridge(const char * filename);
 
-    void Tick();
+    bool Tick();
 
     byte ReadByte(word address);
 

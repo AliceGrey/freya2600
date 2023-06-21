@@ -8,7 +8,7 @@ struct opcode {
     uint8_t cc : 2;
 };
 
-void Emulator::Tick()
+bool Emulator::Tick()
 {
     union {
         struct {
@@ -345,7 +345,13 @@ void Emulator::Tick()
             break;
 
         /// LDX (Load Index Register X From Memory)
-        
+        //Zero Page
+        case 0xA6:
+            X = ReadByte(NextByte());
+            Z = (X == 0);
+            N = (X & 0x80);
+            break;
+            
         // Immediate
         case 0xA2:
             X = NextByte();
@@ -414,7 +420,12 @@ void Emulator::Tick()
         //ROL
         //ROR
         //RTI
-        //RTS
+        //RTS (Return From Subroutine)
+        //Implied
+        case 0x60:
+            PC = PopWord();
+            break;
+
         //SBC (Subtract Memory from Accumulator with Borrow)
         // Zero Page
         case 0xE5:
@@ -470,6 +481,8 @@ void Emulator::Tick()
         //TYA
     default:
         fprintf(stderr, "Unrecognized opcode: %02X\n", opcode);
-        break;
+        return false;
     }
+
+    return true;
 }

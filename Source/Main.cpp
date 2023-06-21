@@ -13,9 +13,14 @@ int main(int argc, char * argv[])
 
     emu->LoadCartridge(argv[1]);
 
-    for (int i = 0; i < 100; ++i) {
-        emu->Tick();
+    int i;
+    for (i = 0;; ++i) {
+        if (!emu->Tick()) {
+            break;
+        }
     }
+
+    printf("%d\n", i);
 
     delete emu;
 
