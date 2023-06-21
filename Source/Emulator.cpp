@@ -32,7 +32,7 @@ void Emulator::LoadCartridge(const char * filename)
     }
 
     // $FFFC Cartridge Entrypoint
-    PC = ReadWord(0x1FFC);
+    PC = ReadWord(0xFFFC);
     printf("Entrypoint: %04X\n", PC);
     // BRK ?
 }

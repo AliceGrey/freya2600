@@ -4,8 +4,7 @@
 
 void Emulator::Tick()
 {
-    uint8_t opcode = ReadByte(PC);
-    ++PC;
+    uint8_t opcode = NextByte();
 
     switch (opcode) {
         // ADC
@@ -36,7 +35,6 @@ void Emulator::Tick()
         case 0x79:
         case 0x6D:
         case 0x7D:
-
         //AND
         //ASL
         //BCC
@@ -45,8 +43,24 @@ void Emulator::Tick()
         //BIT
         //BMI
         //BNE
-        //BPL
-        //BRK
+        //BPL (Branch on Result Plus)
+        case 0x10:
+            {
+                int8_t offset = (int8_t)NextByte();
+                if (N == 0) {
+                    PC += offset;
+                }
+            }    
+            break;
+
+        //BRK (Break)(Implied)
+        case 0x00:
+            I = 1;
+            PushWord(PC + 2);
+            PushByte(SR);
+            PC = ReadWord(0x1FFE);
+            printf("BRK %04X\n", PC);
+            break;
         //BVC
         //BVS
         //CLC (Clear Carry Flag)
@@ -96,31 +110,100 @@ void Emulator::Tick()
             break;
         //JMP (Absolute)
         case 0x4C:
-            PC = ReadWord(PC);
+            PC = NextWord();
             break;
         
         // JMP (Indirect)
         case 0x6C:
-            PC = ReadWord(ReadWord(PC));
+            PC = ReadWord(NextWord());
             break;
 
         // JSR
         case 0x20:
             PushWord(PC + 2);
-            PC = ReadWord(PC);
+            PC = NextWord();
             break;
             
-        //LDA
-        //LDX (Immediate)
+        /// LDA (Load Accumulator with Memory)
+        
+        // Immediate
+        case 0xA9:
+            A = NextByte();
+            Z = (A == 0);
+            N = (A & 0x10);
+            break;
+            
+        // Absolute
+        case 0xAD:
+            A = ReadByte(NextWord());
+            Z = (A == 0);
+            N = (A & 0x10);
+            break;
+            
+        // Absolute,X-Indexed
+        case 0xBD:
+            A = ReadByte(NextWord() + X);
+            Z = (A == 0);
+            N = (A & 0x10);
+            break;
+            
+        // Absolute,Y-Indexed
+        case 0xB9:
+            A = ReadByte(NextWord() + Y);
+            Z = (A == 0);
+            N = (A & 0x10);
+            break;
+        
+        // Zero Page
+        case 0xA5:
+            A = ReadByte(0x0000 + NextByte());
+            Z = (A == 0);
+            N = (A & 0x10);
+            break;
+            
+        /// LDX (Load Index Register X From Memory)
+        
+        // Immediate
         case 0xA2:
-            X = ReadByte(PC);
+            X = NextByte();
             PC += 1;
             Z = (X == 0);
             N = (X & 0x10);
             break;
-        //LDY
-        //LSR
+            
+        // Absolute
+        case 0xAE:
+            X = ReadByte(NextWord());
+            PC += 2;
+            Z = (X == 0);
+            N = (X & 0x10);
+            break;
+        
+        // Absolute,Y-Indexed
+        case 0xBE:
+            break;
+
+        //LDY (Load Index Register Y From Memory)(Immediate)
+        case 0xA0:
+            Y = NextByte();
+            PC += 1;
+            Z = (Y == 0);
+            N = (Y & 0x10);
+            break;
+        //LSR (Logical Shift Right)(Accumulator)
+        case 0x4A:
+            C = (A & 0x01);
+            A >>= 1;
+            N = 0;
+            Z = (A == 0);
+            break;
+
         //NOP
+        case 0x04:
+        case 0x44:
+        case 0x64:
+            PC += 1;
+            break;
         //ORA
         //PHA
         //PHP
@@ -146,9 +229,23 @@ void Emulator::Tick()
         //STA
         //STX
         //STY
-        //TAX
-        //TAY
-        //TSX
+        //TAX (Transfer Accumulator To Index X)
+        // Only two things are certain in life....
+        case 0xAA:
+            X = A;
+            N = (X & 0x10);
+            Z = (X == 0);
+            break;
+        //TAY (Transfer Accumulator To Index Y)
+        case 0xA8:
+            Y = A;
+            N = (Y & 0x10);
+            Z = (Y == 0);
+            break;
+        //TSX (Transfer Index X to Stack Pointer)
+        case 0x9A:
+            SP = X;
+            break;
         //TXA
         //TXS
         //TYA

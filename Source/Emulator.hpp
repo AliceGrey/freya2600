@@ -17,7 +17,7 @@ public:
     word PC;
 
     // Accumulator
-    byte AC;
+    byte A;
 
     // X Register
     byte X;
@@ -77,6 +77,16 @@ public:
 
     void WriteByte(word address, byte data);
 
+    inline byte NextByte() {
+        return ReadByte(PC++);
+    }
+
+    inline word NextWord() {
+        byte lower = NextByte();
+        byte upper = NextByte();
+        return (upper << 8) | lower;
+    }
+
     inline word ReadWord(word address) {
         byte lower = ReadByte(address);
         byte upper = ReadByte(address + 1);
@@ -88,13 +98,23 @@ public:
         WriteByte(address + 1, (data & 0xFF00) >> 8);
     }
 
+    inline void PushByte(byte data) {
+        WriteByte(SP, data);
+        SP -= 1;
+    }
+
+    inline byte PopByte() {
+        SP += 1;
+        return ReadByte(SP);
+    }
+
     inline void PushWord(word data) {
         WriteWord(SP, data);
-        SP += 2;
+        SP -= 2;
     }
 
     inline word PopWord() {
-        SP -= 2;
+        SP += 2;
         return ReadWord(SP);
     }
 
