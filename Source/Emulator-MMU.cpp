@@ -1,4 +1,5 @@
 #include "Emulator.hpp"
+#include "Constants.hpp"
 
 #include <cstdio>
 
@@ -9,78 +10,41 @@ uint8_t Emulator::ReadByte(word address)
 
     // $00 - $7F TIA 
     // $00-$2C TIA (write)
-    if (address >= 0x00 && address <= 0x2C) {
-        printf("TIA READ 0x%04hX \n", address);
-
-        //--------------------------------------------
-        //$0000 - $003F = TIA.......(write)......(read)
-        //--------------------------------------------
-        //$0000 = TIA Address $00 - (VSYNC)......(CXM0P)
-        //$0001 = TIA Address $01 - (VBLANK).....(CXM1P)
-        //$0002 = TIA Address $02 - (WSYNC)......(CXP0FB)
-        //$0003 = TIA Address $03 - (RSYNC)......(CXP1FB)
-        //$0004 = TIA Address $04 - (NUSIZ0).....(CXM0FB)
-        //$0005 = TIA Address $05 - (NUSIZ1).....(CXM1FB)
-        //$0006 = TIA Address $06 - (COLUP0).....(CXBLPF)
-        //$0007 = TIA Address $07 - (COLUP1).....(CXPPMM)
-        //$0008 = TIA Address $08 - (COLUPF).....(INPT0)
-        //$0009 = TIA Address $09 - (COLUBK).....(INPT1)
-        //$000A = TIA Address $0A - (CTRLPF).....(INPT2)
-        //$000B = TIA Address $0B - (REFP0)......(INPT3)
-        //$000C = TIA Address $0C - (REFP1)......(INPT4)
-        //$000D = TIA Address $0D - (PF0)........(INPT5)
-        //$000E = TIA Address $0E - (PF1)........(UNDEFINED)
-        //$000F = TIA Address $0F - (PF2)........(UNDEFINED)
-        //$0010 = TIA Address $10 - (RESP0)......(CXM0P)
-        //$0011 = TIA Address $11 - (RESP1)......(CXM1P)
-        //$0012 = TIA Address $12 - (RESM0)......(CXP0FB)
-        //$0013 = TIA Address $13 - (RESM1)......(CXP1FB)
-        //$0014 = TIA Address $14 - (RESBL)......(CXM0FB)
-        //$0015 = TIA Address $15 - (AUDC0)......(CXM1FB)
-        //$0016 = TIA Address $16 - (AUDC1)......(CXBLPF)
-        //$0017 = TIA Address $17 - (AUDF0)......(CXPPMM)
-        //$0018 = TIA Address $18 - (AUDF1)......(INPT0)
-        //$0019 = TIA Address $19 - (AUDV0)......(INPT1)
-        //$001A = TIA Address $1A - (AUDV1)......(INPT2)
-        //$001B = TIA Address $1B - (GRP0).......(INPT3)
-        //$001C = TIA Address $1C - (GRP1).......(INPT4)
-        //$001D = TIA Address $1D - (ENAM0)......(INPT5)
-        //$001E = TIA Address $1E - (ENAM1)......(UNDEFINED)
-        //$001F = TIA Address $1F - (ENABL)......(UNDEFINED)
-        //$0020 = TIA Address $20 - (HMP0).......(CXM0P)
-        //$0021 = TIA Address $21 - (HMP1).......(CXM1P)
-        //$0022 = TIA Address $22 - (HMM0).......(CXP0FB)
-        //$0023 = TIA Address $23 - (HMM1).......(CXP1FB)
-        //$0024 = TIA Address $24 - (HMBL).......(CXM0FB)
-        //$0025 = TIA Address $25 - (VDELP0).....(CXM1FB)
-        //$0026 = TIA Address $26 - (VDELP1).....(CXBLPF)
-        //$0027 = TIA Address $27 - (VDELBL).....(CXPPMM)
-        //$0028 = TIA Address $28 - (RESMP0).....(INPT0)
-        //$0029 = TIA Address $29 - (RESMP1).....(INPT1)
-        //$002A = TIA Address $2A - (HMOVE)......(INPT2)
-        //$002B = TIA Address $2B - (HMCLR)......(INPT3)
-        //$002C = TIA Address $2C - (CXCLR)......(INPT4)
-    }
     // $30-$3D TIA (read)
-    if (address >= 0x30 && address <= 0x3D) {
-        printf("TIA READ 0x%04hX \n", address); 
-        //---------------------------------------------
-        //$0000 - $003F = TIA.......(write)......(read)
-        //---------------------------------------------
-        //$0030 = TIA Address $30 - (UNDEFINED)..(CXM0P)
-        //$0031 = TIA Address $31 - (UNDEFINED)..(CXM1P)
-        //$0032 = TIA Address $32 - (UNDEFINED)..(CXP0FB)
-        //$0033 = TIA Address $33 - (UNDEFINED)..(CXP1FB)
-        //$0034 = TIA Address $34 - (UNDEFINED)..(CXM0FB)
-        //$0035 = TIA Address $35 - (UNDEFINED)..(CXM1FB)
-        //$0036 = TIA Address $36 - (UNDEFINED)..(CXBLPF)
-        //$0037 = TIA Address $37 - (UNDEFINED)..(CXPPMM)
-        //$0038 = TIA Address $38 - (UNDEFINED)..(INPT0)
-        //$0039 = TIA Address $39 - (UNDEFINED)..(INPT1)
-        //$003A = TIA Address $3A - (UNDEFINED)..(INPT2)
-        //$003B = TIA Address $3B - (UNDEFINED)..(INPT3)
-        //$003C = TIA Address $3C - (UNDEFINED)..(INPT4)
-        //$003D = TIA Address $3D - (UNDEFINED)..(INPT5)
+    if (address >= 0x00 && address <= 0x3D) {
+        switch (address & 0x0F) {
+        case CXM0P:  // Read: Collision D7=(M0;P1); D6=(M0,P0)
+            printf("READ CXM0P\n");
+        case CXM1P:  // Read: Collision D7=(M1;P0); D6=(M1,P1)
+            printf("READ CXM1P\n");
+        case CXP0FB:  // Read: Collision D7=(P0;PF); D6=(P0,BL)
+            printf("READ CXP0FB\n");
+        case CXP1FB:  // Read: Collision D7=(P1;PF); D6=(P1;BL)
+            printf("READ CXP1FB\n");
+        case CXM0FB:  // Read: Collision D7=(M0;PF); D6=(M0;BL)
+            printf("READ CXM0FB\n");
+        case CXM1FB:  // Read: Collision D7=(M1;PF); D6=(M1;BL)
+            printf("READ CXM1FB\n");
+        case CXBLPF:  // Read: Collision D7=(BL;PF); D6=(unused)
+            printf("READ CXBLPF\n");
+        case CXPPMM:  // Read: Collision D7=(P0;P1); D6=(M0;M1)
+            printf("READ CXPPMM\n");
+        case INPT0:  // Read: Pot port D7
+            printf("READ INPT0\n");
+        case INPT1:  // Read: Pot port D7
+            printf("READ INPT1\n");
+        case INPT2:  // Read: Pot port D7
+            printf("READ INPT2\n");
+        case INPT3:  // Read: Pot port D7
+            printf("READ INPT3\n");
+        case INPT4:  // Read: P1 joystick trigger: D7
+            printf("READ INPT4\n");
+        case INPT5:  // Read: P2 joystick trigger: D7
+            printf("READ INPT5\n");
+        default:
+            printf("UNDEFINED READ IN TIA AREA 0x%04X \n", address & 0x0F);
+        }
+
     }
 
     // RIOT RAM
@@ -161,79 +125,104 @@ void Emulator::WriteByte(word address, byte data)
 {
     address = (address & 0b0001'1111'1111'1111);
 
-       // $00 - $7F TIA 
+    // $00 - $7F TIA 
     // $00-$2C TIA (write)
-    if (address >= 0x00 && address <= 0x2C) {
-        printf("TIA WRITE 0x%04hX \n", address);
-        //--------------------------------------------
-        //$0000 - $003F = TIA.......(write)......(read)
-        //--------------------------------------------
-        //$0000 = TIA Address $00 - (VSYNC)......(CXM0P)
-        //$0001 = TIA Address $01 - (VBLANK).....(CXM1P)
-        //$0002 = TIA Address $02 - (WSYNC)......(CXP0FB)
-        //$0003 = TIA Address $03 - (RSYNC)......(CXP1FB)
-        //$0004 = TIA Address $04 - (NUSIZ0).....(CXM0FB)
-        //$0005 = TIA Address $05 - (NUSIZ1).....(CXM1FB)
-        //$0006 = TIA Address $06 - (COLUP0).....(CXBLPF)
-        //$0007 = TIA Address $07 - (COLUP1).....(CXPPMM)
-        //$0008 = TIA Address $08 - (COLUPF).....(INPT0)
-        //$0009 = TIA Address $09 - (COLUBK).....(INPT1)
-        //$000A = TIA Address $0A - (CTRLPF).....(INPT2)
-        //$000B = TIA Address $0B - (REFP0)......(INPT3)
-        //$000C = TIA Address $0C - (REFP1)......(INPT4)
-        //$000D = TIA Address $0D - (PF0)........(INPT5)
-        //$000E = TIA Address $0E - (PF1)........(UNDEFINED)
-        //$000F = TIA Address $0F - (PF2)........(UNDEFINED)
-        //$0010 = TIA Address $10 - (RESP0)......(CXM0P)
-        //$0011 = TIA Address $11 - (RESP1)......(CXM1P)
-        //$0012 = TIA Address $12 - (RESM0)......(CXP0FB)
-        //$0013 = TIA Address $13 - (RESM1)......(CXP1FB)
-        //$0014 = TIA Address $14 - (RESBL)......(CXM0FB)
-        //$0015 = TIA Address $15 - (AUDC0)......(CXM1FB)
-        //$0016 = TIA Address $16 - (AUDC1)......(CXBLPF)
-        //$0017 = TIA Address $17 - (AUDF0)......(CXPPMM)
-        //$0018 = TIA Address $18 - (AUDF1)......(INPT0)
-        //$0019 = TIA Address $19 - (AUDV0)......(INPT1)
-        //$001A = TIA Address $1A - (AUDV1)......(INPT2)
-        //$001B = TIA Address $1B - (GRP0).......(INPT3)
-        //$001C = TIA Address $1C - (GRP1).......(INPT4)
-        //$001D = TIA Address $1D - (ENAM0)......(INPT5)
-        //$001E = TIA Address $1E - (ENAM1)......(UNDEFINED)
-        //$001F = TIA Address $1F - (ENABL)......(UNDEFINED)
-        //$0020 = TIA Address $20 - (HMP0).......(CXM0P)
-        //$0021 = TIA Address $21 - (HMP1).......(CXM1P)
-        //$0022 = TIA Address $22 - (HMM0).......(CXP0FB)
-        //$0023 = TIA Address $23 - (HMM1).......(CXP1FB)
-        //$0024 = TIA Address $24 - (HMBL).......(CXM0FB)
-        //$0025 = TIA Address $25 - (VDELP0).....(CXM1FB)
-        //$0026 = TIA Address $26 - (VDELP1).....(CXBLPF)
-        //$0027 = TIA Address $27 - (VDELBL).....(CXPPMM)
-        //$0028 = TIA Address $28 - (RESMP0).....(INPT0)
-        //$0029 = TIA Address $29 - (RESMP1).....(INPT1)
-        //$002A = TIA Address $2A - (HMOVE)......(INPT2)
-        //$002B = TIA Address $2B - (HMCLR)......(INPT3)
-        //$002C = TIA Address $2C - (CXCLR)......(INPT4)
-    }
     // $30-$3D TIA (read)
-    if (address >= 0x30 && address <= 0x3D) { 
-        printf("TIA WRITE 0x%04hX \n", address);
-        //---------------------------------------------
-        //$0000 - $003F = TIA.......(write)......(read)
-        //---------------------------------------------
-        //$0030 = TIA Address $30 - (UNDEFINED)..(CXM0P)
-        //$0031 = TIA Address $31 - (UNDEFINED)..(CXM1P)
-        //$0032 = TIA Address $32 - (UNDEFINED)..(CXP0FB)
-        //$0033 = TIA Address $33 - (UNDEFINED)..(CXP1FB)
-        //$0034 = TIA Address $34 - (UNDEFINED)..(CXM0FB)
-        //$0035 = TIA Address $35 - (UNDEFINED)..(CXM1FB)
-        //$0036 = TIA Address $36 - (UNDEFINED)..(CXBLPF)
-        //$0037 = TIA Address $37 - (UNDEFINED)..(CXPPMM)
-        //$0038 = TIA Address $38 - (UNDEFINED)..(INPT0)
-        //$0039 = TIA Address $39 - (UNDEFINED)..(INPT1)
-        //$003A = TIA Address $3A - (UNDEFINED)..(INPT2)
-        //$003B = TIA Address $3B - (UNDEFINED)..(INPT3)
-        //$003C = TIA Address $3C - (UNDEFINED)..(INPT4)
-        //$003D = TIA Address $3D - (UNDEFINED)..(INPT5)
+    if (address >= 0x00 && address <= 0x3D) {
+        switch (address) {
+            case VSYNC:
+                printf("WRITE VSYNC\n");  // Write: VSYNC set-clear (D1)
+            case VBLANK:
+                printf("WRITE VBLANK\n");  // Write: VBLANK set-clear (D7-6,D1)
+            case WSYNC :
+                printf("WRITE WSYNC\n");  // Write: Wait for leading edge of hrz. blank (strobe)
+            case RSYNC:
+                printf("WRITE RSYNC\n");  // Write: Reset hrz. sync counter (strobe)
+            case NUSIZ0:
+                printf("WRITE NUSIZ0\n");  // Write: Number-size player-missle 0 (D5-0)
+            case NUSIZ1:
+                printf("WRITE NUSIZ1\n");  // Write: Number-size player-missle 1 (D5-0)
+            case COLUP0:
+                printf("WRITE COLUP0\n");  // Write: Color-lum player 0 (D7-1)
+            case COLUP1:
+                printf("WRITE COLUP1\n");  // Write: Color-lum player 1 (D7-1)
+            case COLUPF:
+                printf("WRITE COLUPF\n");  // Write: Color-lum playfield (D7-1)
+            case COLUBK:
+                printf("WRITE COLUBK\n");  // Write: Color-lum background (D7-1)
+            case CTRLPF:
+                printf("WRITE CTRLPF\n");  // Write: Contrl playfield ballsize & coll. (D5-4,D2-0)
+            case REFP0:
+                printf("WRITE REFP0\n");  // Write: Reflect player 0 (D3)
+            case REFP1:
+                printf("WRITE REFP1\n");  // Write: Reflect player 1 (D3)
+            case PF0:
+                printf("WRITE PF0\n");  // Write: Playfield register byte 0 (D7-4)
+            case PF1:
+                printf("WRITE PF1\n");  // Write: Playfield register byte 1 (D7-0)
+            case PF2:
+                printf("WRITE PF2\n");  // Write: Playfield register byte 2 (D7-0)
+            case RESP0:
+                printf("WRITE RESP0\n");  // Write: Reset player 0 (strobe)
+            case RESP1:
+                printf("WRITE RESP1\n");  // Write: Reset player 1 (strobe)
+            case RESM0:
+                printf("WRITE RESM0\n");  // Write: Reset missle 0 (strobe)
+            case RESM1:
+                printf("WRITE RESM1\n");  // Write: Reset missle 1 (strobe)
+            case RESBL:
+                printf("WRITE RESBL\n");  // Write: Reset ball (strobe)
+            case AUDC0:
+                printf("WRITE AUDC0\n");  // Write: Audio control 0 (D3-0)
+            case AUDC1:
+                printf("WRITE AUDC1\n");  // Write: Audio control 1 (D4-0)
+            case AUDF0:
+                printf("WRITE AUDF0\n");  // Write: Audio frequency 0 (D4-0)
+            case AUDF1:
+                printf("WRITE AUDF1\n");  // Write: Audio frequency 1 (D3-0)
+            case AUDV0:
+                printf("WRITE AUDV0\n");  // Write: Audio volume 0 (D3-0)
+            case AUDV1:
+                printf("WRITE AUDV1\n");  // Write: Audio volume 1 (D3-0)
+            case GRP0:
+                printf("WRITE GRP0\n");  // Write: Graphics player 0 (D7-0)
+            case GRP1:
+                printf("WRITE GRP1\n");  // Write: Graphics player 1 (D7-0)
+            case ENAM0:
+                printf("WRITE ENAM0\n");  // Write: Graphics (enable) missle 0 (D1)
+            case ENAM1:
+                printf("WRITE ENAM1\n");  // Write: Graphics (enable) missle 1 (D1)
+            case ENABL:
+                printf("WRITE ENABL\n");  // Write: Graphics (enable) ball (D1)
+            case HMP0:
+                printf("WRITE HMP0\n");  // Write: Horizontal motion player 0 (D7-4)
+            case HMP1:
+                printf("WRITE HMP1\n");  // Write: Horizontal motion player 1 (D7-4)
+            case HMM0:
+                printf("WRITE HMM0\n");  // Write: Horizontal motion missle 0 (D7-4)
+            case HMM1:
+                printf("WRITE HMM1\n");  // Write: Horizontal motion missle 1 (D7-4)
+            case HMBL:
+                printf("WRITE HMBL\n");  // Write: Horizontal motion ball (D7-4)
+            case VDELP0:
+                printf("WRITE VDELP0\n");  // Write: Vertical delay player 0 (D0)
+            case VDELP1:
+                printf("WRITE VDELP1\n");  // Write: Vertical delay player 1 (D0)
+            case VDELBL:
+                printf("WRITE VDELBL\n");  // Write: Vertical delay ball (D0)
+            case RESMP0:
+                printf("WRITE RESMP0\n");  // Write: Reset missle 0 to player 0 (D1)
+            case RESMP1:
+                printf("WRITE RESMP1\n");  // Write: Reset missle 1 to player 1 (D1)
+            case HMOVE:
+                printf("WRITE HMOVE\n");  // Write: Apply horizontal motion (strobe)
+            case HMCLR:
+                printf("WRITE HMCLR\n");  // Write: Clear horizontal motion registers (strobe)
+            case CXCLR:
+                printf("WRITE CXCLR\n");  // Write: Clear collision latches (strobe)
+            default:
+                printf("UNDEFINTED WRITE IN TIA AREA 0x%04hX \n", address);
+        }
     }
 
     // RIOT RAM
