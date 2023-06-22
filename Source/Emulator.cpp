@@ -58,6 +58,10 @@ void Emulator::LoadCartridge(const char * filename)
 {
     FILE *cart = fopen(filename, "rb");
 
+    char title[1024];
+    snprintf(title,sizeof(title),"Freya2600 - %s",filename);
+    SDL_SetWindowTitle(Window,title);
+
     fseek(cart, 0, SEEK_END);   
     long fz = ftell(cart);
     fseek(cart, 0, SEEK_SET);
