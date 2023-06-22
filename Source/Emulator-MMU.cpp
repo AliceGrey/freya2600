@@ -145,7 +145,12 @@ void Emulator::WriteByte(word address, byte data)
     // $30-$3D TIA (read)
     if (address >= 0x00 && address <= 0x2C) {
         switch (address) {
-            #define TIA_WRITE(REG) case ADDR_##REG: REG._raw = data; break
+
+            #define TIA_WRITE(REG) \
+                case ADDR_##REG: \
+                    REG._raw = data; \
+                    break
+
             TIA_WRITE(VSYNC);  // Write: VSYNC set-clear (D1)
             TIA_WRITE(VBLANK); // Write: VBLANK set-clear (D7-6,D1)
             TIA_WRITE(NUSIZ0); // Write: Number-size player-missle 0 (D5-0)

@@ -7,8 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# TODO: SDL2
-# find_package(SDL2 2.0.6 CONFIG REQUIRED)
+find_package(SDL2 2.0.6 CONFIG REQUIRED)
 
 file(GLOB_RECURSE
     _source_list
@@ -21,8 +20,8 @@ add_executable(
     ${_source_list}
 )
 
-# target_link_libraries(
-#     Freya2600
-#     PRIVATE
-#         SDL2
-# )
+target_link_libraries(
+    Freya2600
+    PRIVATE
+        SDL2::SDL2
+)

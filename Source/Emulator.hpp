@@ -1,14 +1,17 @@
 #ifndef EMULATOR_HPP
 #define EMULATOR_HPP
 
+#include "Constants.hpp"
+
 #include <cstdint>
+
+#include <SDL.h>
 
 typedef uint8_t byte;
 
 typedef uint16_t word;
 
 // typedef uint16_t uint13_t; // shhh
-
 
 union NUSIZ_t {
     struct {
@@ -169,25 +172,25 @@ public:
     // Status Register
     union {
         struct {
-            // Negative
-            byte N : 1;
-
-            // Overflow
-            byte V : 1;
-            
-            byte   : 2;
-
-            // Decimal
-            byte D : 1;
-
-            // Interrupt Disable
-            byte I : 1;
+            // Carry
+            byte C : 1;
 
             // Zero
             byte Z : 1;
 
-            // Carry
-            byte C : 1;
+            // Interrupt Disable
+            byte I : 1;
+
+            // Decimal
+            byte D : 1;
+            
+            byte   : 2;
+
+            // Overflow
+            byte V : 1;
+
+            // Negative
+            byte N : 1;
         };
 
         byte SR;
@@ -311,9 +314,24 @@ public:
 
     byte EXTRAM[0x100];
 
+    SDL_Window * Window = nullptr;
+
+    SDL_Point WindowSize = {
+        DISPLAY_WIDTH * 2,
+        DISPLAY_HEIGHT * 2,
+    };
+
+    SDL_Renderer * Renderer = nullptr;
+
+    SDL_Texture * ScreenTexture = nullptr;
+
+    uint8_t ScreenBuffer[SCREEN_BUFFER_SIZE];
+
     Emulator();
 
     ~Emulator();
+
+    void Run();
 
     void Reset();
 
