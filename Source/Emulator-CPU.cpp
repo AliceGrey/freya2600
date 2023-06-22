@@ -2,7 +2,7 @@
 
 #include <cstdio>
 
-bool Emulator::Tick()
+void Emulator::TickCPU()
 {
     union OPCODE_t {
         struct {
@@ -540,6 +540,4 @@ bool Emulator::Tick()
     }
 
     // poof
-
-    return true;
 }

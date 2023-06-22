@@ -4,9 +4,6 @@
 #include <cstring>
 #include <cassert>
 
-#include <cstdlib>
-#include <ctime>
-
 Emulator::Emulator()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -31,12 +28,26 @@ Emulator::Emulator()
         SCREEN_HEIGHT
     );
 
-    // Test screen buffer
-    srand(time(nullptr));
-    for (int i = 0; i < SCREEN_BUFFER_SIZE; i += 3) {
-        ScreenBuffer[i + 0] = rand() % 256;
-        ScreenBuffer[i + 1] = rand() % 256;
-        ScreenBuffer[i + 2] = rand() % 256;
+    // Official Test Pattern ;) 
+    for (unsigned y = 0; y < SCREEN_HEIGHT; ++y) {
+        for (unsigned x = 0; x < SCREEN_WIDTH; ++x) {
+            unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
+            if (y < 38 || y > 154) {
+                ScreenBuffer[offset + 0] = 91; // R
+                ScreenBuffer[offset + 1] = 206; // G
+                ScreenBuffer[offset + 2] = 250; // B
+            }
+            else if (y < 76 || y > 116) {
+                ScreenBuffer[offset + 0] = 245; // R
+                ScreenBuffer[offset + 1] = 169; // G
+                ScreenBuffer[offset + 2] = 184; // B
+            }
+            else {
+                ScreenBuffer[offset + 0] = 255; // R
+                ScreenBuffer[offset + 1] = 255; // G
+                ScreenBuffer[offset + 2] = 255; // B
+            }
+        }
     }
 }
 
@@ -104,7 +115,8 @@ void Emulator::Run()
 
         // TODO: Determine when a frame has been drawn
         for (int i = 0; i < 1000; ++i) {
-            Tick();
+            TickCPU();
+            TickPPU();
         }
 
         int pitch;

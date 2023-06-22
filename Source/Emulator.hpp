@@ -327,6 +327,8 @@ public:
 
     uint8_t ScreenBuffer[SCREEN_BUFFER_SIZE];
 
+    unsigned ScanLine = 0;
+
     Emulator();
 
     ~Emulator();
@@ -337,7 +339,9 @@ public:
 
     void LoadCartridge(const char * filename);
 
-    bool Tick();
+    void TickCPU();
+
+    void TickPPU();
 
     byte ReadByte(word address);
 
