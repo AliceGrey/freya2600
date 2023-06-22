@@ -145,141 +145,64 @@ void Emulator::WriteByte(word address, byte data)
     // $30-$3D TIA (read)
     if (address >= 0x00 && address <= 0x2C) {
         switch (address) {
-            case ADDR_VSYNC:
-                printf("WRITE VSYNC\n");  // Write: VSYNC set-clear (D1)
+            #define TIA_WRITE(REG) case ADDR_##REG: REG._raw = data; break
+            TIA_WRITE(VSYNC);  // Write: VSYNC set-clear (D1)
+            TIA_WRITE(VBLANK); // Write: VBLANK set-clear (D7-6,D1)
+            TIA_WRITE(NUSIZ0); // Write: Number-size player-missle 0 (D5-0)
+            TIA_WRITE(NUSIZ1); // Write: Number-size player-missle 1 (D5-0)
+            TIA_WRITE(COLUP0); // Write: Color-lum player 0 (D7-1)
+            TIA_WRITE(COLUP1); // Write: Color-lum player 1 (D7-1)
+            TIA_WRITE(COLUPF); // Write: Color-lum playfield (D7-1)
+            TIA_WRITE(COLUBK); // Write: Color-lum background (D7-1)
+            TIA_WRITE(CTRLPF); // Write: Contrl playfield ballsize & coll. (D5-4,D2-0)
+            TIA_WRITE(REFP0);  // Write: Reflect player 0 (D3)
+            TIA_WRITE(REFP1);  // Write: Reflect player 1 (D3)
+            TIA_WRITE(PF0);    // Write: Playfield register byte 0 (D7-4)
+            TIA_WRITE(PF1);    // Write: Playfield register byte 1 (D7-0)
+            TIA_WRITE(PF2);    // Write: Playfield register byte 2 (D7-0)
+            TIA_WRITE(AUDC0);  // Write: Audio control 0 (D3-0)
+            TIA_WRITE(AUDC1);  // Write: Audio control 1 (D4-0)
+            TIA_WRITE(AUDF0);  // Write: Audio frequency 0 (D4-0)
+            TIA_WRITE(AUDF1);  // Write: Audio frequency 1 (D3-0)
+            TIA_WRITE(AUDV0);  // Write: Audio volume 0 (D3-0)
+            TIA_WRITE(AUDV1);  // Write: Audio volume 1 (D3-0)
+            TIA_WRITE(GRP0);   // Write: Graphics player 0 (D7-0)
+            TIA_WRITE(GRP1);   // Write: Graphics player 1 (D7-0)
+            TIA_WRITE(ENAM0);  // Write: Graphics (enable) missle 0 (D1)
+            TIA_WRITE(ENAM1);  // Write: Graphics (enable) missle 1 (D1)
+            TIA_WRITE(ENABL);  // Write: Graphics (enable) ball (D1)
+            TIA_WRITE(HMP0);   // Write: Horizontal motion player 0 (D7-4)
+            TIA_WRITE(HMP1);   // Write: Horizontal motion player 1 (D7-4)
+            TIA_WRITE(HMM0);   // Write: Horizontal motion missle 0 (D7-4)
+            TIA_WRITE(HMM1);   // Write: Horizontal motion missle 1 (D7-4)
+            TIA_WRITE(HMBL);   // Write: Horizontal motion ball (D7-4)
+            TIA_WRITE(VDELP0); // Write: Vertical delay player 0 (D0)
+            TIA_WRITE(VDELP1); // Write: Vertical delay player 1 (D0)
+            TIA_WRITE(VDELBL); // Write: Vertical delay ball (D0)
+            TIA_WRITE(RESMP0); // Write: Reset missle 0 to player 0 (D1)
+            TIA_WRITE(RESMP1); // Write: Reset missle 1 to player 1 (D1)
+
+            case ADDR_WSYNC:  // Write: Wait for leading edge of hrz. blank (strobe)
+                break; 
+            case ADDR_RSYNC:  // Write: Reset hrz. sync counter (strobe)
                 break;
-            case ADDR_VBLANK:
-                printf("WRITE VBLANK\n");  // Write: VBLANK set-clear (D7-6,D1)
+            case ADDR_RESP0:  // Write: Reset player 0 (strobe)
                 break;
-            case ADDR_WSYNC :
-                printf("WRITE WSYNC\n");  // Write: Wait for leading edge of hrz. blank (strobe)
+            case ADDR_RESP1:  // Write: Reset player 1 (strobe)
                 break;
-            case ADDR_RSYNC:
-                printf("WRITE RSYNC\n");  // Write: Reset hrz. sync counter (strobe)
+            case ADDR_RESM0:  // Write: Reset missle 0 (strobe)
                 break;
-            case ADDR_NUSIZ0:
-                printf("WRITE NUSIZ0\n");  // Write: Number-size player-missle 0 (D5-0)
+            case ADDR_RESM1:  // Write: Reset missle 1 (strobe)
                 break;
-            case ADDR_NUSIZ1:
-                printf("WRITE NUSIZ1\n");  // Write: Number-size player-missle 1 (D5-0)
+            case ADDR_RESBL:  // Write: Reset ball (strobe)
                 break;
-            case ADDR_COLUP0:
-                printf("WRITE COLUP0\n");  // Write: Color-lum player 0 (D7-1)
+            case ADDR_HMOVE:  // Write: Apply horizontal motion (strobe)
                 break;
-            case ADDR_COLUP1:
-                printf("WRITE COLUP1\n");  // Write: Color-lum player 1 (D7-1)
+            case ADDR_HMCLR:  // Write: Clear horizontal motion registers (strobe)
                 break;
-            case ADDR_COLUPF:
-                printf("WRITE COLUPF\n");  // Write: Color-lum playfield (D7-1)
+            case ADDR_CXCLR:  // Write: Clear collision latches (strobe)
                 break;
-            case ADDR_COLUBK:
-                printf("WRITE COLUBK\n");  // Write: Color-lum background (D7-1)
-                break;
-            case ADDR_CTRLPF:
-                printf("WRITE CTRLPF\n");  // Write: Contrl playfield ballsize & coll. (D5-4,D2-0)
-                break;
-            case ADDR_REFP0:
-                printf("WRITE REFP0\n");  // Write: Reflect player 0 (D3)
-                break;
-            case ADDR_REFP1:
-                printf("WRITE REFP1\n");  // Write: Reflect player 1 (D3)
-                break;
-            case ADDR_PF0:
-                printf("WRITE PF0\n");  // Write: Playfield register byte 0 (D7-4)
-                break;
-            case ADDR_PF1:
-                printf("WRITE PF1\n");  // Write: Playfield register byte 1 (D7-0)
-                break;
-            case ADDR_PF2:
-                printf("WRITE PF2\n");  // Write: Playfield register byte 2 (D7-0)
-                break;
-            case ADDR_RESP0:
-                printf("WRITE RESP0\n");  // Write: Reset player 0 (strobe)
-                break;
-            case ADDR_RESP1:
-                printf("WRITE RESP1\n");  // Write: Reset player 1 (strobe)
-                break;
-            case ADDR_RESM0:
-                printf("WRITE RESM0\n");  // Write: Reset missle 0 (strobe)
-                break;
-            case ADDR_RESM1:
-                printf("WRITE RESM1\n");  // Write: Reset missle 1 (strobe)
-                break;
-            case ADDR_RESBL:
-                printf("WRITE RESBL\n");  // Write: Reset ball (strobe)
-                break;
-            case ADDR_AUDC0:
-                printf("WRITE AUDC0\n");  // Write: Audio control 0 (D3-0)
-                break;
-            case ADDR_AUDC1:
-                printf("WRITE AUDC1\n");  // Write: Audio control 1 (D4-0)
-                break;
-            case ADDR_AUDF0:
-                printf("WRITE AUDF0\n");  // Write: Audio frequency 0 (D4-0)
-                break;
-            case ADDR_AUDF1:
-                printf("WRITE AUDF1\n");  // Write: Audio frequency 1 (D3-0)
-                break;
-            case ADDR_AUDV0:
-                printf("WRITE AUDV0\n");  // Write: Audio volume 0 (D3-0)
-                break;
-            case ADDR_AUDV1:
-                printf("WRITE AUDV1\n");  // Write: Audio volume 1 (D3-0)
-                break;
-            case ADDR_GRP0:
-                printf("WRITE GRP0\n");  // Write: Graphics player 0 (D7-0)
-                break;
-            case ADDR_GRP1:
-                printf("WRITE GRP1\n");  // Write: Graphics player 1 (D7-0)
-                break;
-            case ADDR_ENAM0:
-                printf("WRITE ENAM0\n");  // Write: Graphics (enable) missle 0 (D1)
-                break;
-            case ADDR_ENAM1:
-                printf("WRITE ENAM1\n");  // Write: Graphics (enable) missle 1 (D1)
-                break;
-            case ADDR_ENABL:
-                printf("WRITE ENABL\n");  // Write: Graphics (enable) ball (D1)
-                break;
-            case ADDR_HMP0:
-                printf("WRITE HMP0\n");  // Write: Horizontal motion player 0 (D7-4)
-                break;
-            case ADDR_HMP1:
-                printf("WRITE HMP1\n");  // Write: Horizontal motion player 1 (D7-4)
-                break;
-            case ADDR_HMM0:
-                printf("WRITE HMM0\n");  // Write: Horizontal motion missle 0 (D7-4)
-                break;
-            case ADDR_HMM1:
-                printf("WRITE HMM1\n");  // Write: Horizontal motion missle 1 (D7-4)
-                break;
-            case ADDR_HMBL:
-                printf("WRITE HMBL\n");  // Write: Horizontal motion ball (D7-4)
-                break;
-            case ADDR_VDELP0:
-                printf("WRITE VDELP0\n");  // Write: Vertical delay player 0 (D0)
-                break;
-            case ADDR_VDELP1:
-                printf("WRITE VDELP1\n");  // Write: Vertical delay player 1 (D0)
-                break;
-            case ADDR_VDELBL:
-                printf("WRITE VDELBL\n");  // Write: Vertical delay ball (D0)
-                break;
-            case ADDR_RESMP0:
-                printf("WRITE RESMP0\n");  // Write: Reset missle 0 to player 0 (D1)
-                break;
-            case ADDR_RESMP1:
-                printf("WRITE RESMP1\n");  // Write: Reset missle 1 to player 1 (D1)
-                break;
-            case ADDR_HMOVE:
-                printf("WRITE HMOVE\n");  // Write: Apply horizontal motion (strobe)
-                break;
-            case ADDR_HMCLR:
-                printf("WRITE HMCLR\n");  // Write: Clear horizontal motion registers (strobe)
-                break;
-            case ADDR_CXCLR:
-                printf("WRITE CXCLR\n");  // Write: Clear collision latches (strobe)
-                break;
+            
             default:
                 printf("UNDEFINTED WRITE IN TIA AREA 0x%04hX \n", address);
                 break;
