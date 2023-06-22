@@ -35,9 +35,90 @@ void Emulator::TickPPU()
             unsigned y = MemoryLine - VBLANK_CUTOFF;
             unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
 
-            ScreenBuffer[offset + 0] = y; // R
-            ScreenBuffer[offset + 1] = y; // G
-            ScreenBuffer[offset + 2] = x; // B
+            //O
+            if (x > 10 && x < 20 && y > 80 && y < 82) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 10 && x < 20 && y > 100 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 10 && x < 12 && y > 80 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 18 && x < 20 && y > 80 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            //H
+            if (x > 24 && x < 34 && y > 90 && y < 92) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 24 && x < 26 && y > 80 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 32 && x < 34 && y > 80 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            //H
+            if (x > 44 && x < 54 && y > 90 && y < 92) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 44 && x < 46 && y > 80 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 52 && x < 54 && y > 80 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+
+            //I
+            if (x > 54 && x < 64 && y > 100 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 58 && x < 60 && y > 80 && y < 102) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            if (x > 54 && x < 64 && y > 80 && y < 82) {
+            ScreenBuffer[offset + 0] = 0; // R
+            ScreenBuffer[offset + 1] = 0; // G
+            ScreenBuffer[offset + 2] = 0; // B
+            break;
+            }
+            
     }
 
     ++MemoryColumn;
