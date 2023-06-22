@@ -11,6 +11,21 @@ constexpr size_t SCREEN_BUFFER_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT * 3; // RGB
 constexpr size_t DISPLAY_WIDTH = 320;
 constexpr size_t DISPLAY_HEIGHT = 240;
 
+constexpr size_t HBLANK_CUTOFF = 68;
+constexpr size_t VBLANK_CUTOFF = 40;
+constexpr size_t OVERSCAN_CUTOFF = 232;
+constexpr size_t VSYNC_LINES = 3;
+constexpr size_t VBLANK_LINES = 37;
+constexpr size_t OVERSCAN_LINES = 30;
+
+enum PPUState {
+    IN_VBLANK,
+    IN_HBLANK,
+    VISIBLE,
+    IN_OVERSCAN
+};
+
+
 //WRITE TIA
 constexpr uint16_t ADDR_VSYNC   = 0x00;  // Write: VSYNC set-clear (D1)
 constexpr uint16_t ADDR_VBLANK  = 0x01;  // Write: VBLANK set-clear (D7-6,D1)

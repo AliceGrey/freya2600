@@ -327,7 +327,9 @@ public:
 
     uint8_t ScreenBuffer[SCREEN_BUFFER_SIZE];
 
-    unsigned ScanLine = 0;
+    unsigned MemoryLine = 0;
+
+    PPUState DrawState;
 
     Emulator();
 

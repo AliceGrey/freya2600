@@ -14,46 +14,46 @@ uint8_t Emulator::ReadByte(word address)
     if (address >= 0x00 && address <= 0x3D) {
         switch (address & 0x0F) {
         case ADDR_CXM0P:  // Read: Collision D7=(M0;P1); D6=(M0,P0)
-            printf("READ CXM0P\n");
+            //printf("READ CXM0P\n");
             break;
         case ADDR_CXM1P:  // Read: Collision D7=(M1;P0); D6=(M1,P1)
-            printf("READ CXM1P\n");
+            //printf("READ CXM1P\n");
             break;
         case ADDR_CXP0FB:  // Read: Collision D7=(P0;PF); D6=(P0,BL)
-            printf("READ CXP0FB\n");
+            //printf("READ CXP0FB\n");
             break;
         case ADDR_CXP1FB:  // Read: Collision D7=(P1;PF); D6=(P1;BL)
-            printf("READ CXP1FB\n");
+            //printf("READ CXP1FB\n");
             break;
         case ADDR_CXM0FB:  // Read: Collision D7=(M0;PF); D6=(M0;BL)
-            printf("READ CXM0FB\n");
+            //printf("READ CXM0FB\n");
             break;
         case ADDR_CXM1FB:  // Read: Collision D7=(M1;PF); D6=(M1;BL)
-            printf("READ CXM1FB\n");
+            //printf("READ CXM1FB\n");
             break;
         case ADDR_CXBLPF:  // Read: Collision D7=(BL;PF); D6=(unused)
-            printf("READ CXBLPF\n");
+            //printf("READ CXBLPF\n");
             break;
         case ADDR_CXPPMM:  // Read: Collision D7=(P0;P1); D6=(M0;M1)
-            printf("READ CXPPMM\n");
+            //printf("READ CXPPMM\n");
             break;
         case ADDR_INPT0:  // Read: Pot port D7
-            printf("READ INPT0\n");
+            //printf("READ INPT0\n");
             break;
         case ADDR_INPT1:  // Read: Pot port D7
-            printf("READ INPT1\n");
+            //printf("READ INPT1\n");
             break;
         case ADDR_INPT2:  // Read: Pot port D7
-            printf("READ INPT2\n");
+            //printf("READ INPT2\n");
             break;
         case ADDR_INPT3:  // Read: Pot port D7
-            printf("READ INPT3\n");
+            //printf("READ INPT3\n");
             break;
         case ADDR_INPT4:  // Read: P1 joystick trigger: D7
-            printf("READ INPT4\n");
+            //printf("READ INPT4\n");
             break;
         case ADDR_INPT5:  // Read: P2 joystick trigger: D7
-            printf("READ INPT5\n");
+            //printf("READ INPT5\n");
             break;
         default:
             printf("UNDEFINED READ IN TIA AREA 0x%04X \n", address & 0x0F);
@@ -215,7 +215,7 @@ void Emulator::WriteByte(word address, byte data)
     }
 
     if (address >= 0x2D && address <= 0x3F) {
-        printf("ILLEGAL WRITE IN TIA AREA 0x%04hX \n", address);
+        //printf("ILLEGAL WRITE IN TIA AREA 0x%04hX \n", address);
     }
 
     // RIOT RAM

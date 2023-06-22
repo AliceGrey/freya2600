@@ -113,11 +113,23 @@ void Emulator::Run()
             // TODO: Input
         }
 
+        unsigned instructions = 0;
+        static unsigned frame = 0;
+
         // TODO: Determine when a frame has been drawn
-        for (int i = 0; i < 1000; ++i) {
+        for (;;) {
             TickCPU();
+            ++instructions;
+
+            unsigned lastMemoryLine = MemoryLine;
             TickPPU();
+            if (MemoryLine == 0 && MemoryLine != lastMemoryLine) {
+                ++frame;
+                break;
+            }
         }
+
+        printf("Frame %u took %u instructions\n", frame, instructions);
 
         int pitch;
         uint8_t * pixels = nullptr;

@@ -3,41 +3,53 @@
 void Emulator::TickPPU()
 {
     // The current column being computed
-    static unsigned column = 0;
+    static unsigned MemoryColumn = 0;
+    if (MemoryLine <= VBLANK_CUTOFF){
+        DrawState = IN_VBLANK;
+    }
+    if (MemoryColumn <= HBLANK_CUTOFF){
+        DrawState = IN_HBLANK;
+    }
+    if (MemoryLine >= OVERSCAN_CUTOFF){
+        DrawState = IN_OVERSCAN;
+    }
+    if (MemoryColumn >= HBLANK_CUTOFF && MemoryLine >= VBLANK_CUTOFF && MemoryLine < OVERSCAN_CUTOFF) {
+        DrawState = VISIBLE;
+    }
+    
+    switch(DrawState){
+        case IN_VBLANK:
+            //TODO
+            break;
+        
+        case IN_HBLANK:
+            //TODO
+            break;
+        
+        case IN_OVERSCAN:
+            //TODO
+            break;
+        
+        case VISIBLE:
+            unsigned x = MemoryColumn - HBLANK_CUTOFF;
+            unsigned y = MemoryLine - VBLANK_CUTOFF;
+            unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
 
-    ++column;
+            ScreenBuffer[offset + 0] = y; // R
+            ScreenBuffer[offset + 1] = y; // G
+            ScreenBuffer[offset + 2] = x; // B
+    }
+
+    ++MemoryColumn;
     // Once we hit the end of the line
-    if (column == 228) {
-        column = 0;
+    if (MemoryColumn == 228) {
+        MemoryColumn = 0;
+        ++MemoryLine;
 
-        ++ScanLine;
         // Once we hit the last line
-        if (ScanLine == 262) {
-            ScanLine = 0;
+        if (MemoryLine == 262) {
+            MemoryLine = 0;
         }
     }
-    // If we're in the display area
-    if (ScanLine >= 40 && ScanLine <= 232 && column >= 68) {
-        unsigned x = column - 68;
-        unsigned y = ScanLine - 40;
-
-        unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
-
-        // //Official Test Pattern ;) 
-        // if (y < 38 || y > 154) {
-        //     ScreenBuffer[offset + 0] = 91; // R
-        //     ScreenBuffer[offset + 1] = 206; // G
-        //     ScreenBuffer[offset + 2] = 250; // B
-        // }
-        // else if (y < 76 || y > 116) {
-        //     ScreenBuffer[offset + 0] = 245; // R
-        //     ScreenBuffer[offset + 1] = 169; // G
-        //     ScreenBuffer[offset + 2] = 184; // B
-        // }
-        // else {
-        //     ScreenBuffer[offset + 0] = 255; // R
-        //     ScreenBuffer[offset + 1] = 255; // G
-        //     ScreenBuffer[offset + 2] = 255; // B
-        // }
-    }
+    
 }
