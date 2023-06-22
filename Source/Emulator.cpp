@@ -101,6 +101,11 @@ void Emulator::Run()
             // TODO: Input
         }
 
+        // TODO: Determine when a frame has been drawn
+        for (int i = 0; i < 1000; ++i) {
+            Tick();
+        }
+
         int pitch;
         uint8_t * pixels = nullptr;
         SDL_LockTexture(ScreenTexture, nullptr, (void **)&pixels, &pitch);
