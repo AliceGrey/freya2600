@@ -17,7 +17,7 @@ Emulator::Emulator()
         SDL_WINDOWPOS_CENTERED,
         WindowSize.x,
         WindowSize.y,
-        SDL_WINDOW_RESIZABLE
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN
     );
 
     Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED);
@@ -84,6 +84,7 @@ void Emulator::LoadCartridge(const char * filename)
 
 void Emulator::Run()
 {
+    SDL_ShowWindow(Window);
     bool running = true;
     while (running) {
         SDL_Event event;
