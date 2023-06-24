@@ -281,9 +281,9 @@ public:
 
     bool WSYNC = false;
 
-    byte RAM[0x80];
-
     byte ROM[MAX_BANKS][ROM_BANK_SIZE];
+
+    byte RAM[0x80];
 
     int currentBank; // currently selected rombank
 
@@ -327,7 +327,8 @@ public:
     void printRAMGrid(const uint8_t* RAM);
 
     inline byte NextByte() {
-        byte tmp = ReadByte(PC++);
+        byte tmp = ReadByte(PC);
+        PC++;
         printf("NEXTBYTE: %02X\n", tmp);
         return tmp; //ReadByte(PC++);
     }
@@ -353,6 +354,7 @@ public:
         SP -= 1;
         WriteByte(SP, data);
     }
+
 
     inline byte PopByte() {
         byte data = ReadByte(SP);

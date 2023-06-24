@@ -232,7 +232,7 @@ void Emulator::WriteByte(word address, byte data)
 
     // RIOT RAM
     if (address >= 0x80 && address <= 0xFF) {
-        //RAM[address - 0x80] = data;
+        RAM[address - 0x80] = data;
     }
 
     // RIOT (I/O, Timer)

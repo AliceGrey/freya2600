@@ -97,7 +97,7 @@ void Emulator::LoadCartridge(const char * filename)
             // Special case for 2KB ROMs
             // Print RAM
             printRAMGrid(RAM);
-            fread(ROM[0], 1, fileSize, file);
+            fread(&ROM[0][0], 1, fileSize, file);
             // Print RAM
             printRAMGrid(RAM);
             memcpy(&ROM[0][2048], &ROM[0][0x0000], 0x0800);
