@@ -49,7 +49,7 @@ void Emulator::TickCPU()
 
     // JSR
     case 0x20:
-        PushWord(PC + 2);
+        PushWord(PC + 1);
         PC = NextWord();
         break;
 
@@ -62,7 +62,7 @@ void Emulator::TickCPU()
 
     // RTS (Return From Subroutme)
     case 0x60:
-        PC = PopWord();
+        PC = PopWord() + 1;
         break;
 
     // PHP (Push Processor Status On Stack)
@@ -563,6 +563,6 @@ void Emulator::TickCPU()
     
     printRAMGrid(RAM);
     //if (PC == 0xf005){exit(0);}
-    if (instructions > 5){exit(0);}
+    //if (instructions > 5){exit(0);}
     instructions ++;
 }
