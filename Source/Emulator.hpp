@@ -37,6 +37,10 @@ union COLUP_t {
         byte COL2 : 1;
         byte COL3 : 1;
     };
+    struct {
+        byte : 1;
+        byte Index : 1;
+    };
     byte _raw;
 };
 
@@ -45,20 +49,6 @@ union REFP_t {
         byte : 3;
         byte Enabled : 1;
         byte : 4;
-    };
-    byte _raw;
-};
-
-union PF_t {
-    struct {
-        byte PX0 : 1;
-        byte PX1 : 1;
-        byte PX2 : 1;
-        byte PX3 : 1;
-        byte PX4 : 1;
-        byte PX5 : 1;
-        byte PX6 : 1;
-        byte PX7 : 1;
     };
     byte _raw;
 };
@@ -249,20 +239,7 @@ public:
 
     REFP_t REFP1;
 
-    union {
-        struct {
-            byte : 4;
-            byte PX0 : 1;
-            byte PX1 : 1;
-            byte PX2 : 1;
-            byte PX3 : 1;
-        };
-        byte _raw;
-    } PF0;
-
-    PF_t PF1;
-
-    PF_t PF2;
+    byte PF[3];
 
     AUDC_t AUDC0;
 
@@ -302,7 +279,7 @@ public:
     
     RESMP_t RESMP1; // Reset Missile Player 1
 
-
+    bool WSYNC = false;
 
 
 
@@ -343,7 +320,7 @@ public:
 
     void TickCPU();
 
-    void TickPPU();
+    void TickTIA();
 
     byte ReadByte(word address);
 
@@ -371,23 +348,25 @@ public:
     }
 
     inline void PushByte(byte data) {
-        WriteByte(SP, data);
         SP -= 1;
+        WriteByte(SP, data);
     }
 
     inline byte PopByte() {
+        byte data = ReadByte(SP);
         SP += 1;
-        return ReadByte(SP);
+        return data;
     }
 
     inline void PushWord(word data) {
-        WriteWord(SP, data);
         SP -= 2;
+        WriteWord(SP, data);
     }
 
     inline word PopWord() {
+        word data = ReadWord(SP);
         SP += 2;
-        return ReadWord(SP);
+        return data;
     }
 
 };

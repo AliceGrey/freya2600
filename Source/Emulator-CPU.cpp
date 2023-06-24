@@ -4,22 +4,26 @@
 
 void Emulator::TickCPU()
 {
+    if (WSYNC) {
+        return;
+    }
+    
     union OPCODE_t {
         struct {
-            uint8_t inst : 3;
-            uint8_t mode : 3;
             uint8_t group : 2;
+            uint8_t mode : 3;
+            uint8_t inst : 3;
         };
 
         struct {
-            uint8_t flag : 2;
-            uint8_t test : 1;
             uint8_t : 5;
+            uint8_t test : 1;
+            uint8_t flag : 2;
         };
         
         uint8_t _raw;
     };
-    
+
     OPCODE_t opcode = {._raw = NextByte() };
 
     #define SET_NZ(VALUE) \
@@ -30,6 +34,8 @@ void Emulator::TickCPU()
     word address;
 
     bool found = true;
+
+    // printf("PC=%04X OP=%02X inst=%d mode=%d group=%d\n", PC - 1, opcode._raw, opcode.inst, opcode.mode, opcode.group);
 
     switch (opcode._raw) {
     // BRK:
@@ -215,7 +221,7 @@ void Emulator::TickCPU()
                 break;
             }
         }
-        else if (opcode.group == 0x01) {
+        else if (opcode.group == 0b01) {
 
             switch (opcode.mode) {
             // (Zero Page,X)
@@ -323,10 +329,10 @@ void Emulator::TickCPU()
             }
 
         }
-        else if (opcode.group == 0x10) {
+        else if (opcode.group == 0b10) {
 
             bool isA = (opcode.mode == 0b010);
-            bool isX = (opcode.inst == 0b1000 || opcode.inst == 0b101);
+            bool isX = (opcode.inst == 0b100 || opcode.inst == 0b101);
 
             switch (opcode.mode) {
             // #Immediate
@@ -457,7 +463,7 @@ void Emulator::TickCPU()
                 break;
             }
         }
-        else if (opcode.group == 0x00) {
+        else if (opcode.group == 0b00) {
 
             switch (opcode.mode) {
             // #Immediate

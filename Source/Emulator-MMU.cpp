@@ -56,7 +56,7 @@ uint8_t Emulator::ReadByte(word address)
             //printf("READ INPT5\n");
             break;
         default:
-            printf("UNDEFINED READ IN TIA AREA 0x%04X \n", address & 0x0F);
+            printf("UNDEFINED READ IN TIA AREA 0x%04X \n", address);
             break;
         }
 
@@ -162,9 +162,6 @@ void Emulator::WriteByte(word address, byte data)
             TIA_WRITE(CTRLPF); // Write: Contrl playfield ballsize & coll. (D5-4,D2-0)
             TIA_WRITE(REFP0);  // Write: Reflect player 0 (D3)
             TIA_WRITE(REFP1);  // Write: Reflect player 1 (D3)
-            TIA_WRITE(PF0);    // Write: Playfield register byte 0 (D7-4)
-            TIA_WRITE(PF1);    // Write: Playfield register byte 1 (D7-0)
-            TIA_WRITE(PF2);    // Write: Playfield register byte 2 (D7-0)
             TIA_WRITE(AUDC0);  // Write: Audio control 0 (D3-0)
             TIA_WRITE(AUDC1);  // Write: Audio control 1 (D4-0)
             TIA_WRITE(AUDF0);  // Write: Audio frequency 0 (D4-0)
@@ -187,7 +184,17 @@ void Emulator::WriteByte(word address, byte data)
             TIA_WRITE(RESMP0); // Write: Reset missle 0 to player 0 (D1)
             TIA_WRITE(RESMP1); // Write: Reset missle 1 to player 1 (D1)
 
+            case ADDR_PF0:    // Write: Playfield register byte 0 (D7-4)
+                PF[0] = data;
+                break;
+            case ADDR_PF1:    // Write: Playfield register byte 1 (D7-0)
+                PF[1] = data;
+                break;
+            case ADDR_PF2:    // Write: Playfield register byte 2 (D7-0)
+                PF[2] = data;
+                break;
             case ADDR_WSYNC:  // Write: Wait for leading edge of hrz. blank (strobe)
+                WSYNC = true;
                 break; 
             case ADDR_RSYNC:  // Write: Reset hrz. sync counter (strobe)
                 break;
@@ -219,8 +226,8 @@ void Emulator::WriteByte(word address, byte data)
     }
 
     // RIOT RAM
-    if (address >= 0x0080 && address <= 0x00FF) {
-        RAM[address - 0x0080] = data;
+    if (address >= 0x80 && address <= 0xFF) {
+        RAM[address - 0x80] = data;
     }
 
     // RIOT (I/O, Timer)

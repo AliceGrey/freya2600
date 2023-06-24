@@ -117,15 +117,19 @@ void Emulator::Run()
         static unsigned frame = 0;
 
         // TODO: Determine when a frame has been drawn
-        for (;;) {
+        bool drawing = true;
+        while (drawing) {
             TickCPU();
             ++instructions;
 
-            unsigned lastMemoryLine = MemoryLine;
-            TickPPU();
-            if (MemoryLine == 0 && MemoryLine != lastMemoryLine) {
-                ++frame;
-                break;
+            for (int i = 0; i < 3; ++i) {
+                unsigned lastMemoryLine = MemoryLine;
+                TickTIA();
+                if (MemoryLine == 0 && MemoryLine != lastMemoryLine) {
+                    ++frame;
+                    drawing = false;
+                    break;
+                }
             }
         }
 
