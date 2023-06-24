@@ -7,6 +7,7 @@ void Emulator::TickCPU()
 {
     
     
+    
     if (WSYNC) {
         return;
     }
@@ -37,6 +38,9 @@ void Emulator::TickCPU()
     word address;
 
     bool found = true;
+
+    //if (instructions > 300){exit(0);}
+    printf("PC=%04X OP=%02X inst=%d mode=%d group=%d totalInst=%d\n", PC - 1, opcode._raw, opcode.inst, opcode.mode, opcode.group, instructions);
 
     switch (opcode._raw) {
     // BRK:
@@ -189,32 +193,32 @@ void Emulator::TickCPU()
     }
 
     if (!found) {
-        // Branch
+        // Branch Instructions
 
         if (opcode.mode == 0b100 && opcode.group == 0b00) {
 
             int8_t offset = (int8_t)NextByte();
 
             switch (opcode.flag) {
-            // N
+            // BPL & BMI
             case 0b00:
                 if (N == opcode.test) {
                     PC += offset;
                 }
                 break;
-            // V
+            // BVC & BVS
             case 0b01:
                 if (V == opcode.test) {
                     PC += offset;
                 }
                 break;
-            // C
+            // BCC & BCS
             case 0b10:
                 if (C == opcode.test) {
                     PC += offset;
                 }
                 break;
-            // Z
+            // BNE & BEQ
             case 0b11:
                 if (Z == opcode.test) {
                     PC += offset;
@@ -555,14 +559,8 @@ void Emulator::TickCPU()
     }
 
     // poof
-    
-    
     printf("SP=%02X A=%02X X=%02X Y=%02X\n",SP, A, X, Y);
     printf("C=%02X Z=%02X I=%02X D=%02X V=%02X N=%02X\n", C, Z, I, D, V, N);
-    printf("PC=%04X OP=%02X inst=%d mode=%d group=%d totalInst=%d\n", PC, opcode._raw, opcode.inst, opcode.mode, opcode.group, instructions);
-    
     printRAMGrid(RAM);
-    //if (PC == 0xf005){exit(0);}
-    //if (instructions > 5){exit(0);}
     instructions ++;
 }
