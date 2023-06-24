@@ -67,25 +67,51 @@ Emulator::~Emulator()
 
 void Emulator::LoadCartridge(const char * filename)
 {
-    FILE *cart = fopen(filename, "rb");
+    //Try to open file
+    FILE* file = fopen(filename, "rb");
+    if (file == nullptr) {
+        printf("Failed to open ROM file: %s\n", filename);
+        return;
+    }
 
+    //Set Windows Title
     char title[1024];
     snprintf(title,sizeof(title),"Freya2600 - %s",filename);
     SDL_SetWindowTitle(Window,title);
 
-    fseek(cart, 0, SEEK_END);   
-    long fz = ftell(cart);
-    fseek(cart, 0, SEEK_SET);
-    fread(&ROM[0][0x0000], 1, fz, cart);
-    fclose(cart);
+    // Determine the ROM file size
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
 
-    if (fz == 0x0800){
-        //Because memory banks lmao
-        memcpy(&ROM[0][0x0800], &ROM[0][0x0000], 0x0800);
-        // so smol
-        // much wow
-        // very cool
+    // Calculate the number of ROM banks
+    int numBanks = fileSize / ROM_BANK_SIZE;
+    if (numBanks > MAX_BANKS) {
+        printf("ROM file is too large. Maximum number of banks supported: %d\n", MAX_BANKS);
+        fclose(file);
+        return;
     }
+
+    // Load ROM banks
+        if (fileSize == 2048) {
+            // Special case for 2KB ROMs
+            // Print RAM
+            printRAMGrid(RAM);
+            fread(ROM[0], 1, fileSize, file);
+            // Print RAM
+            printRAMGrid(RAM);
+            memcpy(&ROM[0][2048], &ROM[0][0x0000], 0x0800);
+        } else {
+            // Normal case for larger ROMs
+            for (int bank = 0; bank < numBanks; bank++) {
+                fread(ROM[bank], 1, ROM_BANK_SIZE, file);
+            }
+        }
+
+    fclose(file);
+    printf("ROM file loaded successfully.\n");
+    printf("Number of ROM banks: %d\n", numBanks);
+    printf("Current ROM bank: %d\n", currentBank);
 
     // $FFFC Cartridge Entrypoint
     PC = ReadWord(0xFFFC);
@@ -168,5 +194,35 @@ void Emulator::Run()
         SDL_RenderCopy(Renderer, ScreenTexture, nullptr, &destination);
 
         SDL_RenderPresent(Renderer);
+    }
+    
+}
+
+
+void Emulator::printRAMGrid(const uint8_t* RAM) {
+    // Print top column names
+    printf("    ");
+    for (int i = 0; i < 16; i++) {
+        printf("%02x ", i);
+    }
+    printf("\n");
+
+    // Print separator line
+    printf("   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n");
+
+    // Print rows
+    for (int row = 8; row < 16; row++) {
+        printf("%02x ", row);
+        
+        // Print values in the row
+        for (int col = 0; col < 16; col++) {
+            int index = row * 16 + col;
+            printf("|%02x", static_cast<int>(RAM[index]));
+        }
+        
+        printf("|\n");
+
+        // Print separator line
+        printf("   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n");
     }
 }

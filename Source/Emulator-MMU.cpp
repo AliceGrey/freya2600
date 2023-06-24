@@ -8,6 +8,8 @@ uint8_t Emulator::ReadByte(word address)
     // bit mask
     address = (address & 0b0001'1111'1111'1111);
 
+    printf("ReadByte Address: 0x%04X\n", address);
+
     // $00 - $7F TIA 
     // $00-$2C TIA (write)
     // $30-$3D TIA (read)
@@ -64,7 +66,7 @@ uint8_t Emulator::ReadByte(word address)
 
     // RIOT RAM
     if (address >= 0x80 && address <= 0xFF) {
-        return RAM[address - 0x80];
+        //return RAM[address - 0x80];
     }
     // RIOT (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {
@@ -117,7 +119,10 @@ uint8_t Emulator::ReadByte(word address)
 
     // ROM
     if (address >= 0x1000 && address <= 0x1FFF) {
-        return ROM[ROMBank][address - 0x1000];
+        //return ROM[ROMBank][address - 0x1000];
+        int bank = currentBank;
+        int offset = (address - BANK_SWITCH_ADDRESS) % ROM_BANK_SIZE;
+        return ROM[bank][offset];
     }
 
     //sTr0be BANK
@@ -227,7 +232,7 @@ void Emulator::WriteByte(word address, byte data)
 
     // RIOT RAM
     if (address >= 0x80 && address <= 0xFF) {
-        RAM[address - 0x80] = data;
+        //RAM[address - 0x80] = data;
     }
 
     // RIOT (I/O, Timer)
@@ -276,10 +281,15 @@ void Emulator::WriteByte(word address, byte data)
         // LMAO NICE TRY - FAFO
     }
 
-    //BANK
-    if (address == 0x3F) {
-        ROMBank = (data & 0b00000011);
+    if (address == BANK_SWITCH_ADDRESS) {
+        currentBank = data;
+        printf("Switched to ROM bank: %d\n", currentBank);
     }
+
+    //BANK
+    //if (address == 0x3F) {
+    //    ROMBank = (data & 0b00000011);
+    //}
 
     //sTr0be BANK
     // The bank number is selected by reading from (or by writing any value to) specific addresses, the addresses and corresponding bank numbers are:

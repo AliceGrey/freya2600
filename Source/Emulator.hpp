@@ -281,13 +281,11 @@ public:
 
     bool WSYNC = false;
 
-
-
     byte RAM[0x80];
 
-    unsigned ROMBank = 0;
+    byte ROM[MAX_BANKS][ROM_BANK_SIZE];
 
-    byte ROM[8][0x1000];
+    int currentBank; // currently selected rombank
 
     byte EXTRAM[0x100];
 
@@ -326,8 +324,12 @@ public:
 
     void WriteByte(word address, byte data);
 
+    void printRAMGrid(const uint8_t* RAM);
+
     inline byte NextByte() {
-        return ReadByte(PC++);
+        byte tmp = ReadByte(PC++);
+        printf("NEXTBYTE: %02X\n", tmp);
+        return tmp; //ReadByte(PC++);
     }
 
     inline word NextWord() {

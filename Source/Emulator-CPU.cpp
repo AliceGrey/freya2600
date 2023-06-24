@@ -2,8 +2,11 @@
 
 #include <cstdio>
 
+unsigned instructions = 0;
 void Emulator::TickCPU()
 {
+    
+    
     if (WSYNC) {
         return;
     }
@@ -34,8 +37,6 @@ void Emulator::TickCPU()
     word address;
 
     bool found = true;
-
-    // printf("PC=%04X OP=%02X inst=%d mode=%d group=%d\n", PC - 1, opcode._raw, opcode.inst, opcode.mode, opcode.group);
 
     switch (opcode._raw) {
     // BRK:
@@ -231,6 +232,9 @@ void Emulator::TickCPU()
 
             // Zero Page
             case 0b001:
+                //address = 0x0000 + NextByte(); 
+                printf("Zero Page Address: %08X\n",address);
+                printf("Got Here\n");
                 data = ReadByte(0x0000 + NextByte());
                 break;
 
@@ -274,7 +278,9 @@ void Emulator::TickCPU()
 
             // AND
             case 0b001:
+                printf("AND Data: %02X\n",data);
                 A &= data;
+                printf("AND A: %02X\n",A);
                 SET_NZ(A);
                 break;
 
@@ -297,8 +303,11 @@ void Emulator::TickCPU()
 
             // STA
             case 0b100:
-                A = data;
-                SET_NZ(A);
+                printf("STA data: %04hX\n", data);
+                WriteByte(address, A);
+                printf("STA A data: %04hX\n", A);
+                printf("STA A Address: %04hX\n", address);
+                printf("???\n");
                 break;
 
             // LDA
@@ -546,4 +555,8 @@ void Emulator::TickCPU()
     }
 
     // poof
+    printf("PC=%04X OP=%02X inst=%d mode=%d group=%d totalInst=%d\n", PC, opcode._raw, opcode.inst, opcode.mode, opcode.group, instructions);
+    //if (PC == 0xf011){exit(0);}
+    if (instructions > 0){exit(0);}
+    instructions ++;
 }

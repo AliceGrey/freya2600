@@ -4,6 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 
+constexpr size_t ROM_BANK_SIZE = 4096;
+constexpr size_t MAX_BANKS = 8;
+constexpr size_t BANK_SWITCH_ADDRESS = 0x1000;
+
+
 constexpr size_t SCREEN_WIDTH = 160;
 constexpr size_t SCREEN_HEIGHT = 192;
 constexpr size_t SCREEN_BUFFER_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT * 3; // RGB
