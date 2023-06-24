@@ -559,7 +559,7 @@ void Emulator::TickCPU()
     
     printf("SP=%02X A=%02X X=%02X Y=%02X\n",SP, A, X, Y);
     printf("C=%02X Z=%02X I=%02X D=%02X V=%02X N=%02X\n", C, Z, I, D, V, N);
-    printf("PC=%04X OP=%02X inst=%d mode=%d group=%d totalInst=%d\n", PC-1, opcode._raw, opcode.inst, opcode.mode, opcode.group, instructions);
+    printf("PC=%04X OP=%02X inst=%d mode=%d group=%d totalInst=%d\n", PC, opcode._raw, opcode.inst, opcode.mode, opcode.group, instructions);
     
     printRAMGrid(RAM);
     //if (PC == 0xf005){exit(0);}

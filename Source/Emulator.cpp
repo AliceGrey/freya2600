@@ -217,7 +217,7 @@ void Emulator::printRAMGrid(const uint8_t* RAM) {
         // Print values in the row
         for (int col = 0; col < 16; col++) {
             int index = row * 16 + col;
-            printf("|%02x", static_cast<int>(RAM[index]));
+            printf("|%02x", (RAM[index-0x80]));
         }
         
         printf("|\n");

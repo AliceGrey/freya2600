@@ -327,10 +327,7 @@ public:
     void printRAMGrid(const uint8_t* RAM);
 
     inline byte NextByte() {
-        byte tmp = ReadByte(PC);
-        PC++;
-        printf("NEXTBYTE: %02X\n", tmp);
-        return tmp; //ReadByte(PC++);
+        return ReadByte(PC++);
     }
 
     inline word NextWord() {
@@ -352,23 +349,23 @@ public:
 
     inline void PushByte(byte data) {
         SP -= 1;
-        WriteByte(SP, data);
+        WriteByte(SP + 1, data);
     }
 
 
     inline byte PopByte() {
-        byte data = ReadByte(SP);
+        byte data = ReadByte(SP + 1);
         SP += 1;
         return data;
     }
 
     inline void PushWord(word data) {
         SP -= 2;
-        WriteWord(SP, data);
+        WriteWord(SP + 1, data);
     }
 
     inline word PopWord() {
-        word data = ReadWord(SP);
+        word data = ReadWord(SP + 1);
         SP += 2;
         return data;
     }
