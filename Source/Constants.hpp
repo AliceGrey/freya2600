@@ -5,6 +5,7 @@
 #include <cstdint>
 
 constexpr size_t ROM_BANK_SIZE = 4096;
+constexpr size_t ROM_HALF_BANK_SIZE = ROM_BANK_SIZE / 2;
 constexpr size_t MAX_BANKS = 8;
 constexpr size_t BANK_SWITCH_ADDRESS = 0x1000;
 

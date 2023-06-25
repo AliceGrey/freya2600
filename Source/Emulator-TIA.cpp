@@ -150,43 +150,61 @@ constexpr uint8_t NTSC[128][3] = {
 
 void Emulator::TickTIA()
 {
+
+
+    // states = vsync, vblank, visible, overscan
+    // sub-state h-blank
+    // hmm
+
+
     // The current column being computed
-    static unsigned MemoryColumn = 0;
-    if (MemoryLine <= VBLANK_CUTOFF){
-        DrawState = IN_VBLANK;
-    }
-    if (MemoryColumn <= HBLANK_CUTOFF){
-        DrawState = IN_HBLANK;
-    }
-    if (MemoryLine >= OVERSCAN_CUTOFF){
-        DrawState = IN_OVERSCAN;
-    }
-    if (MemoryColumn >= HBLANK_CUTOFF && MemoryLine >= VBLANK_CUTOFF && MemoryLine < OVERSCAN_CUTOFF) {
-        DrawState = VISIBLE;
-    }
-
-    if (MemoryColumn == 0) {
-        WSYNC = false;
-    }
+    // if (MemoryLine <= VBLANK_CUTOFF) {
+    //     DrawState = IN_VBLANK;
+    // }
+    // if (MemoryColumn <= HBLANK_CUTOFF) {
+    //     DrawState = IN_HBLANK;
+    // }
+    // if (MemoryLine >= OVERSCAN_CUTOFF) {
+    //     DrawState = IN_OVERSCAN;
+    // }
+    // if (MemoryColumn > HBLANK_CUTOFF && MemoryLine > VBLANK_CUTOFF && MemoryLine < OVERSCAN_CUTOFF) {
+    //     DrawState = VISIBLE;
+    // }
     
-    switch(DrawState){
-        case IN_VBLANK:
-            //TODO
-            break;
+    // switch(DrawState){
+    //     case IN_VBLANK:
+    //         //TODO
+    //         break;
         
-        case IN_HBLANK:
-            //TODO
-            break;
+    //     case IN_HBLANK:
+    //         //TODO
+    //         break;
         
-        case IN_OVERSCAN:
-            //TODO
-            break;
+    //     case IN_OVERSCAN:
+    //         //TODO
+    //         break;
         
-        case VISIBLE:
-            unsigned x = MemoryColumn - HBLANK_CUTOFF;
-            unsigned y = MemoryLine - VBLANK_CUTOFF;
-            unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
+    //     case VISIBLE:
+    if (MemoryColumn >= HBLANK_CUTOFF && MemoryLine >= VBLANK_CUTOFF && MemoryLine < OVERSCAN_CUTOFF) {
+        unsigned x = MemoryColumn - HBLANK_CUTOFF;
+        unsigned y = MemoryLine - VBLANK_CUTOFF;
+        unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
 
+        // black holez
+        if (VBLANK.Enabled) {
+            bool check = (((x / 4) + (y / 4)) % 2) == 0;
+            if (check) {
+                ScreenBuffer[offset + 0] = 255;
+                ScreenBuffer[offset + 1] = 0;
+                ScreenBuffer[offset + 2] = 255;
+            }
+            else {
+                ScreenBuffer[offset + 0] = 0;
+                ScreenBuffer[offset + 1] = 0;
+                ScreenBuffer[offset + 2] = 0;
+            }
+        }
+        else {
             auto& background = NTSC[COLUBK.Index];
             auto& playerField = NTSC[COLUPF.Index];
 
@@ -194,119 +212,131 @@ void Emulator::TickTIA()
             ScreenBuffer[offset + 1] = background[1]; // G
             ScreenBuffer[offset + 2] = background[2]; // B
 
+            unsigned dot = x / 4;
+
+            if (dot >= 20) {
+                dot -= 20;
+
+                if (CTRLPF.ReflectEnabled) {
+                    dot = 19 - dot;
+                }
+            }
+
             unsigned bits[] = {
                 4, 5, 6, 7,
                 7, 6, 5, 4, 3, 2, 1, 0,
                 0, 1, 2, 3, 4, 5, 6, 7
             };
 
+
             // shhhh
             unsigned byte = 0;
-            if (x >= 4) {
+            if (dot >= 4) {
                 byte = 1;
-                if (x >= 12) {
+                if (dot >= 12) {
                     byte = 2;
                 }
             }
 
-            if (PF[byte] & (1 << bits[x])) {
+            if (PF[byte] & (1 << bits[dot])) {
                 ScreenBuffer[offset + 0] = playerField[0];
                 ScreenBuffer[offset + 1] = playerField[1];
                 ScreenBuffer[offset + 2] = playerField[2];   
             }
 
-            //TODO
+        }
 
-            // unsigned x = MemoryColumn - HBLANK_CUTOFF;
-            // unsigned y = MemoryLine - VBLANK_CUTOFF;
-            // unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
+        //TODO
 
-            // //O
-            // if (x > 10 && x < 20 && y > 80 && y < 82) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 10 && x < 20 && y > 100 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 10 && x < 12 && y > 80 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 18 && x < 20 && y > 80 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // //H
-            // if (x > 24 && x < 34 && y > 90 && y < 92) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 24 && x < 26 && y > 80 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 32 && x < 34 && y > 80 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // //H
-            // if (x > 44 && x < 54 && y > 90 && y < 92) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 44 && x < 46 && y > 80 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 52 && x < 54 && y > 80 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
+        // unsigned x = MemoryColumn - HBLANK_CUTOFF;
+        // unsigned y = MemoryLine - VBLANK_CUTOFF;
+        // unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
 
-            // //I
-            // if (x > 54 && x < 64 && y > 100 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 58 && x < 60 && y > 80 && y < 102) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            // if (x > 54 && x < 64 && y > 80 && y < 82) {
-            // ScreenBuffer[offset + 0] = 0; // R
-            // ScreenBuffer[offset + 1] = 0; // G
-            // ScreenBuffer[offset + 2] = 0; // B
-            // break;
-            // }
-            
+        // //O
+        // if (x > 10 && x < 20 && y > 80 && y < 82) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 10 && x < 20 && y > 100 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 10 && x < 12 && y > 80 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 18 && x < 20 && y > 80 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // //H
+        // if (x > 24 && x < 34 && y > 90 && y < 92) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 24 && x < 26 && y > 80 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 32 && x < 34 && y > 80 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // //H
+        // if (x > 44 && x < 54 && y > 90 && y < 92) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 44 && x < 46 && y > 80 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 52 && x < 54 && y > 80 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+
+        // //I
+        // if (x > 54 && x < 64 && y > 100 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 58 && x < 60 && y > 80 && y < 102) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
+        // if (x > 54 && x < 64 && y > 80 && y < 82) {
+        // ScreenBuffer[offset + 0] = 0; // R
+        // ScreenBuffer[offset + 1] = 0; // G
+        // ScreenBuffer[offset + 2] = 0; // B
+        // break;
+        // }
     }
-
+    
     ++MemoryColumn;
     // Once we hit the end of the line
     if (MemoryColumn == 228) {
@@ -318,5 +348,8 @@ void Emulator::TickTIA()
             MemoryLine = 0;
         }
     }
-    
+
+    if (MemoryColumn == 0) {
+        WSYNC = false;
+    }
 }

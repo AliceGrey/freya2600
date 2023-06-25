@@ -281,9 +281,9 @@ public:
 
     bool WSYNC = false;
 
-    byte ROM[MAX_BANKS][ROM_BANK_SIZE];
-
     byte RAM[0x80];
+
+    byte ROM[MAX_BANKS][ROM_BANK_SIZE];
 
     int currentBank; // currently selected rombank
 
@@ -304,7 +304,15 @@ public:
 
     unsigned MemoryLine = 0;
 
+    unsigned MemoryColumn = 0;
+
     PPUState DrawState;
+
+    uintmax_t CPUCycleCount = 0;
+
+    uintmax_t TIACycleCount = 0;
+
+    uintmax_t FrameCount = 0;
 
     Emulator();
 

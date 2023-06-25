@@ -81,42 +81,33 @@ void Emulator::LoadCartridge(const char * filename)
 
     // Determine the ROM file size
     fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
+    unsigned long fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
     // Calculate the number of ROM banks
     int numBanks = fileSize / ROM_BANK_SIZE;
     if (numBanks > MAX_BANKS) {
-        printf("ROM file is too large. Maximum number of banks supported: %d\n", MAX_BANKS);
-        fclose(file);
-        return;
+        printf("'%s' is not a valid Atari 2600 ROM, the file is too large.\n");
+        exit(1);
     }
 
-    // Load ROM banks
-        if (fileSize == 2048) {
-            // Special case for 2KB ROMs
-            // Print RAM
-            printRAMGrid(RAM);
-            fread(&ROM[0][0], 1, fileSize, file);
-            // Print RAM
-            printRAMGrid(RAM);
-            memcpy(&ROM[0][2048], &ROM[0][0x0000], 0x0800);
-        } else {
-            // Normal case for larger ROMs
-            for (int bank = 0; bank < numBanks; bank++) {
-                fread(ROM[bank], 1, ROM_BANK_SIZE, file);
-            }
-        }
+    // Read the ROM file into memory
+    fileSize = std::min(fileSize, sizeof(ROM));
+    fread(&ROM[0][0x0000], 1, fileSize, file);
+
+    // Deal with undersized ROMs
+    if (fileSize == ROM_HALF_BANK_SIZE) {
+        memcpy(&ROM[0][ROM_HALF_BANK_SIZE], &ROM[0][0x0000], ROM_HALF_BANK_SIZE);
+    }
 
     fclose(file);
+
     printf("ROM file loaded successfully.\n");
     printf("Number of ROM banks: %d\n", numBanks);
-    printf("Current ROM bank: %d\n", currentBank);
 
     // $FFFC Cartridge Entrypoint
     PC = ReadWord(0xFFFC);
     printf("Entrypoint: %04X\n", PC);
-    // BRK ?
 }
 
 void Emulator::Run()
@@ -139,27 +130,35 @@ void Emulator::Run()
             // TODO: Input
         }
 
-        unsigned instructions = 0;
-        static unsigned frame = 0;
+        uint64_t beforeFrameCycles = CPUCycleCount;
 
         // TODO: Determine when a frame has been drawn
         bool drawing = true;
-        while (drawing) {
-            TickCPU();
-            ++instructions;
+        while (drawing){
 
-            for (int i = 0; i < 3; ++i) {
+            uint64_t beforeInstCycles = CPUCycleCount;
+            
+            TickCPU();
+
+            uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
+
+            printf("Instruction took %llu cycles\n", deltaInstCycles);
+
+            for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
                 unsigned lastMemoryLine = MemoryLine;
+
                 TickTIA();
+
                 if (MemoryLine == 0 && MemoryLine != lastMemoryLine) {
-                    ++frame;
                     drawing = false;
                     break;
                 }
             }
         }
 
-        printf("Frame %u took %u instructions\n", frame, instructions);
+        uint64_t deltaFrameCycles = CPUCycleCount - beforeFrameCycles;
+
+        //printf("Frame took %llu cycles\n", deltaFrameCycles);
 
         int pitch;
         uint8_t * pixels = nullptr;
@@ -202,27 +201,29 @@ void Emulator::Run()
 void Emulator::printRAMGrid(const uint8_t* RAM) {
     // Print top column names
     printf("    ");
-    for (int i = 0; i < 16; i++) {
-        printf("%02x ", i);
+    for (int i = 0x00; i <= 0x0F; i++) {
+        printf("%02X ", i);
     }
     printf("\n");
 
+    const char * sep = "   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n";
+
     // Print separator line
-    printf("   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n");
+    printf(sep);
 
     // Print rows
-    for (int row = 8; row < 16; row++) {
+    for (int row = 0x80; row <= 0xF0; row += 0x10) {
         printf("%02x ", row);
         
         // Print values in the row
-        for (int col = 0; col < 16; col++) {
-            int index = row * 16 + col;
-            printf("|%02x", (RAM[index-0x80]));
+        for (int col = 0x00; col <= 0x0F; col++) {
+            int index = row + col;
+            printf("|%02X", (RAM[index-0x80]));
         }
         
         printf("|\n");
 
         // Print separator line
-        printf("   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n");
+        printf(sep);
     }
 }

@@ -2,13 +2,10 @@
 
 #include <cstdio>
 
-unsigned instructions = 0;
 void Emulator::TickCPU()
 {
-    
-    
-    
     if (WSYNC) {
+        CPUCycleCount += 1;
         return;
     }
     
@@ -36,11 +33,11 @@ void Emulator::TickCPU()
 
     byte data;
     word address;
+    word result; // The 16-bit result of 8-bit math, used to look for overflows
 
     bool found = true;
 
-    //if (instructions > 300){exit(0);}
-    printf("PC=%04X OP=%02X inst=%d mode=%d group=%d totalInst=%d\n", PC - 1, opcode._raw, opcode.inst, opcode.mode, opcode.group, instructions);
+    //printf("PC=%04X OP=%02X inst=%d mode=%d group=%d\n", PC - 1, opcode._raw, opcode.inst, opcode.mode, opcode.group);
 
     switch (opcode._raw) {
     // BRK:
@@ -48,13 +45,15 @@ void Emulator::TickCPU()
         I = 1;
         PushWord(PC + 2);
         PushByte(SR);
-        PC = ReadWord(0x1FFE);
+        PC = ReadWord(0xFFFE);
+        CPUCycleCount += 1;
         break;
 
     // JSR
     case 0x20:
         PushWord(PC + 1);
         PC = NextWord();
+        CPUCycleCount += 1;
         break;
 
     // RTI (Return From Interrupt)
@@ -62,129 +61,153 @@ void Emulator::TickCPU()
         SR = PopByte();
         PC = PopWord();
         I = 0;
+        CPUCycleCount += 2;
         break;
 
     // RTS (Return From Subroutine)
     case 0x60:
         PC = PopWord() + 1;
+        CPUCycleCount += 3;
         break;
 
     // PHP (Push Processor Status On Stack)
     case 0x08:
         PushByte(SR);
+        CPUCycleCount += 1;
         break;
 
     // PLP (Pull Processor Status From Stack)
     case 0x28:
         SR = PopByte();
+        CPUCycleCount += 2;
         break;
 
     // PHA (Push Accumulator On Stack)
     case 0x48:
         PushByte(A);
+        CPUCycleCount += 1;
         break;
 
     // PLA (Pull Accumulator From Stack)
     case 0x68:
         A = PopByte();
+        CPUCycleCount += 2;
         break;
 
     // DEY (Decrement Index Y by One)
     case 0x88:
         Y -= 1;
         SET_NZ(Y);
+        CPUCycleCount += 1;
         break;
 
     // TAY (Transfer Accumulator To Index Y)
     case 0xA8:
         Y = A;
         SET_NZ(Y);
+        CPUCycleCount += 1;
         break;
 
     // INY (Increment Index Y by One)
     case 0xC8:
         Y += 1;
         SET_NZ(Y);
+        CPUCycleCount += 1;
         break;
 
     // INX (Increment Index X by One)
     case 0xE8:
         X += 1;
         SET_NZ(X);
+        CPUCycleCount += 1;
         break;
 
     // CLC (Clear Carry Flag)
     case 0x18:
         C = 0;
+        CPUCycleCount += 1;
         break;
 
     // SEC (Set Carry Flag)
     case 0x38:
         C = 1;
+        CPUCycleCount += 1;
         break;
 
     // CLI (Clear Interrupt Disable)
     case 0x58:
         I = 0;
+        CPUCycleCount += 1;
         break;
 
     // SEI (Set Interrupt Disable)
     case 0x78:
         I = 1;
+        CPUCycleCount += 1;
         break;
 
     // TYA (Transfer Index Y To Accumulator)
     case 0x98:
         A = Y;
         SET_NZ(A);
+        CPUCycleCount += 1;
         break;
 
     // CLV (Clear Overflow Flag)
     case 0xB8:
         V = 0;
+        CPUCycleCount += 1;
         break;
 
     // CLD (Clear Decimal Mode)
     case 0xD8:
         D = 0;
+        CPUCycleCount += 1;
         break;
 
     // SED (Set Decimal Mode)
     case 0xF8:
         D = 1;
+        CPUCycleCount += 1;
         break;
 
     // TXA (Transfer Index X To Accumulator)
     case 0x8A:
         A = X;
         SET_NZ(A);
+        CPUCycleCount += 1;
         break;
 
     // TXS (Transfer Index X To Stack Pointer)
     case 0x9A:
         SP = X;
+        CPUCycleCount += 1;
         break;
 
     // TAX (Transfer Accumulator To Index X)
     case 0xAA:
         X = A;
         SET_NZ(X);
+        CPUCycleCount += 1;
         break;
 
     // TSX (Transfer Stack Pointer To Index X)
     case 0xBA:
         X = SP;
         SET_NZ(X);
+        CPUCycleCount += 1;
         break;
 
     // DEX (Decrement Index Register X By One)
     case 0xCA:
         X -= 1;
         SET_NZ(X);
+        CPUCycleCount += 1;
         break;
 
     // NOP (No Operation)
     case 0xEA: // Get in the game
+        CPUCycleCount += 1;
         break;
 
     default:
@@ -204,24 +227,28 @@ void Emulator::TickCPU()
             case 0b00:
                 if (N == opcode.test) {
                     PC += offset;
+                    CPUCycleCount += 1;
                 }
                 break;
             // BVC & BVS
             case 0b01:
                 if (V == opcode.test) {
                     PC += offset;
+                    CPUCycleCount += 1;
                 }
                 break;
             // BCC & BCS
             case 0b10:
                 if (C == opcode.test) {
                     PC += offset;
+                    CPUCycleCount += 1;
                 }
                 break;
             // BNE & BEQ
             case 0b11:
                 if (Z == opcode.test) {
                     PC += offset;
+                    CPUCycleCount += 1;
                 }
                 break;
             }
@@ -231,113 +258,103 @@ void Emulator::TickCPU()
             switch (opcode.mode) {
             // (Zero Page,X)
             case 0b000:
-                data = ReadByte(ReadWord(0x0000 + NextByte() + X));
+                address = ReadWord(0x0000 + NextByte() + X);
+                CPUCycleCount += 1;
                 break;
 
             // Zero Page
             case 0b001:
-                //address = 0x0000 + NextByte(); 
-                printf("Zero Page Address: %08X\n",address);
-                printf("Got Here\n");
-                data = ReadByte(0x0000 + NextByte());
+                address = 0x0000 + NextByte();
                 break;
 
             // #Immediate
             case 0b010:
-                data = NextByte();
+                address = PC;
+                PC += 1;
                 break;
 
             // Absolute
             case 0b011:
-                data = ReadByte(NextWord());
+                address = NextWord();
                 break;
 
             // (Zero Page),Y
             case 0b100:
-                data = ReadByte(ReadWord(NextByte()) + Y);
+                address = ReadWord(NextByte()) + Y;
                 break;
 
             // Zero Page,X
             case 0b101:
-                data = ReadByte(0x0000 + NextByte() + X);
+                address = 0x0000 + NextByte() + X;
+                CPUCycleCount += 1;
                 break;
 
             // Absolute,Y
             case 0b110:
-                data = ReadByte(NextWord() + Y);
+                address = NextWord() + Y;
                 break;
 
             // Absolute,X
             case 0b111:
-                data = ReadByte(NextWord() + X);
+                address = NextWord() + X;
                 break;
             }
 
             switch (opcode.inst) {
             // ORA
             case 0b000:
-                A |= data;
+                A |= ReadByte(address);
                 SET_NZ(A);
                 break;
 
             // AND
             case 0b001:
-                printf("AND Data: %02X\n",data);
-                A &= data;
-                printf("AND A: %02X\n",A);
+                A &= ReadByte(address);
                 SET_NZ(A);
                 break;
 
             // EOR
             case 0b010:
-                A ^= data;
+                A ^= ReadByte(address);
                 SET_NZ(A);
                 break;
 
             // ADC (Add Memory to Accumulator with Carry)
             case 0b011:
-                {
-                    word result = A + data + C;
-                    C = (result & 0xFF00);
-                    A = (result & 0xFF);
-                    V = ((A ^ data) & (A ^ result) & 0x80); // wtf // We overflowing boiiiiii // #help
-                    SET_NZ(A);
-                }
+                data = ReadByte(address);
+                result = A + data + C;
+                C = (result & 0xFF00);
+                A = (result & 0xFF);
+                V = ((A ^ data) & (A ^ result) & 0x80); // wtf // We overflowing boiiiiii // #help
+                SET_NZ(A);
                 break;
 
             // STA
             case 0b100:
-                printf("STA data: %04hX\n", data);
                 WriteByte(address, A);
-                printf("STA A data: %04hX\n", A);
-                printf("STA A Address: %04hX\n", address);
-                printf("???\n");
                 break;
 
             // LDA
             case 0b101:
-                A = data;
+                A = ReadByte(address);
                 SET_NZ(A);
                 break;
 
             // CMP
             case 0b110:
-                {
-                    word result = A - data;
-                    C = !(result & 0xFF00);
-                    SET_NZ(result & 0xFF00);
-                }
+                result = A - ReadByte(address);
+                C = !(result & 0xFF00);
+                SET_NZ(result & 0xFF00);
                 break;
 
             // SBC:
             case 0b111:
-                {
-                    word result = A - data - ~C;
-                    V = ((A ^ data) & (A ^ result) & 0x80); // wtf
-                    C = !(result & 0xFF00);
-                    A = (result & 0xFF);
-                    SET_NZ(A);
-                }
+                data = ReadByte(address);
+                result = A - data - ~C;
+                V = ((A ^ data) & (A ^ result) & 0x80); // wtf
+                C = !(result & 0xFF00);
+                A = (result & 0xFF);
+                SET_NZ(A);
                 break;
             }
 
@@ -350,13 +367,13 @@ void Emulator::TickCPU()
             switch (opcode.mode) {
             // #Immediate
             case 0b000:
-                data = NextByte();
+                address = PC;
+                PC += 1;
                 break;
 
             // Zero Page
             case 0b001:
                 address = 0x0000 + NextByte();
-                data = ReadByte(address);
                 break;
 
             // Accumulator
@@ -366,19 +383,16 @@ void Emulator::TickCPU()
             // Absolute
             case 0b011:
                 address = NextWord();
-                data = ReadByte(address);
                 break;
 
             // Zero Page,X/Y
             case 0b101:
                 address = 0x0000 + NextByte() + (isX ? Y : X);
-                data = ReadByte(address);
                 break;
 
             // Absolute,X/Y
             case 0b111:
                 address = NextWord() + (isX ? Y : X);
-                data = ReadByte(address);
                 break;
             }
 
@@ -391,6 +405,7 @@ void Emulator::TickCPU()
                     SET_NZ(A);
                 }
                 else {
+                    data = ReadByte(address);
                     C = (data & 0x80);
                     data <<= 1;
                     SET_NZ(data);
@@ -401,13 +416,14 @@ void Emulator::TickCPU()
             // ROL
             case 0b001:
                 if (isA) {
-                    uint16_t result = (A << 1) | C;
+                    result = (A << 1) | C;
                     C = (result & 0x0100);
                     A = result;
                     SET_NZ(A);
                 }
                 else {
-                    uint16_t result = (data << 1) | C;
+                    data = ReadByte(address);
+                    result = (data << 1) | C;
                     C = (result & 0x0100);
                     data = result;
                     SET_NZ(data);
@@ -423,6 +439,7 @@ void Emulator::TickCPU()
                     SET_NZ(A);
                 }
                 else {
+                    data = ReadByte(address);
                     C = (data & 0x01);
                     data >>= 1;
                     SET_NZ(data);
@@ -433,13 +450,14 @@ void Emulator::TickCPU()
             // ROR
             case 0b011:
                 if (isA) {
-                    uint16_t result = ((A | (C << 7)) >> 1);
+                    result = ((A | (C << 7)) >> 1);
                     C = (A & 0x01);
                     A = result;
                     SET_NZ(A);
                 }
                 else {
-                    uint16_t result = ((data | (C << 7)) >> 1);
+                    data = ReadByte(address);
+                    result = ((data | (C << 7)) >> 1);
                     C = (data & 0x01);
                     data = result;
                     SET_NZ(data);
@@ -453,26 +471,22 @@ void Emulator::TickCPU()
 
             // LDX
             case 0b101:
-                X = data;
+                X = ReadByte(address);
                 SET_NZ(X);
                 break;
 
             // DEC
             case 0b110:
-                {
-                    uint16_t result = data - 1;
-                    SET_NZ(X);
-                    WriteByte(address, data);
-                }
+                data = ReadByte(address) - 1;
+                SET_NZ(data);
+                WriteByte(address, data);
                 break;
 
             // INC
             case 0b111:
-                {
-                    uint16_t result = data + 1;
-                    SET_NZ(X);
-                    WriteByte(address, data);
-                }
+                data = ReadByte(address) + 1;
+                SET_NZ(data);
+                WriteByte(address, data);
                 break;
             }
         }
@@ -481,38 +495,35 @@ void Emulator::TickCPU()
             switch (opcode.mode) {
             // #Immediate
             case 0b000:
-                data = NextByte();
+                address = PC;
+                PC += 1;
                 break;
 
             // Zero Page
             case 0b001:
                 address = 0x0000 + NextByte();
-                data = ReadByte(address);
                 break;
 
             // Absolute
             case 0b011:
                 address = NextWord();
-                data = ReadByte(address);
                 break;
 
             // Zero Page,X
             case 0b101:
                 address = 0x0000 + NextByte() + X;
-                data = ReadByte(address);
                 break;
 
             // Absolute,X
             case 0b111:
                 address = NextWord() + X;
-                data = ReadByte(address);
                 break;
             }
 
             switch (opcode.inst) {
             // BIT
             case 0b001:
-                data &= A;
+                data = ReadByte(address) & A;
                 V = (data & 0x40);
                 SET_NZ(data);
                 break;
@@ -534,33 +545,28 @@ void Emulator::TickCPU()
 
             // LDY
             case 0b101:
-                Y = data;
+                Y = ReadByte(address);
                 break;
 
             // CPY
             case 0b110:
-                {
-                    word result = Y - data;
-                    C = !(result & 0xFF00);
-                    SET_NZ(result & 0xFF);
-                }
+                result = Y - ReadByte(address);
+                C = !(result & 0xFF00);
+                SET_NZ(result & 0xFF);
                 break;
 
             // CPX
             case 0b111:
-                {
-                    word result = X - data;
-                    C = !(result & 0xFF00);
-                    SET_NZ(result & 0xFF);
-                }
+                result = X - ReadByte(address);
+                C = !(result & 0xFF00);
+                SET_NZ(result & 0xFF);
                 break;
             }
         }
     }
 
     // poof
-    printf("SP=%02X A=%02X X=%02X Y=%02X\n",SP, A, X, Y);
-    printf("C=%02X Z=%02X I=%02X D=%02X V=%02X N=%02X\n", C, Z, I, D, V, N);
-    printRAMGrid(RAM);
-    instructions ++;
+    //printf("SP=%02X A=%02X X=%02X Y=%02X\n",SP, A, X, Y);
+    //printf("C=%02X Z=%02X I=%02X D=%02X V=%02X N=%02X\n", C, Z, I, D, V, N);
+    //printRAMGrid(RAM);
 }

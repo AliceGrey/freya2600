@@ -5,10 +5,12 @@
 
 uint8_t Emulator::ReadByte(word address)
 {
+    ++CPUCycleCount;
+
     // bit mask
     address = (address & 0b0001'1111'1111'1111);
 
-    printf("ReadByte Address: 0x%04X\n", address);
+    //printf("ReadByte Address: 0x%04X\n", address);
 
     // $00 - $7F TIA 
     // $00-$2C TIA (write)
@@ -143,6 +145,8 @@ uint8_t Emulator::ReadByte(word address)
 
 void Emulator::WriteByte(word address, byte data)
 {
+    ++CPUCycleCount;
+
     address = (address & 0b0001'1111'1111'1111);
 
     // $00 - $7F TIA 
@@ -156,7 +160,14 @@ void Emulator::WriteByte(word address, byte data)
                     REG._raw = data; \
                     break
 
-            TIA_WRITE(VSYNC);  // Write: VSYNC set-clear (D1)
+            // TIA_WRITE(VSYNC);  // Write: VSYNC set-clear (D1)
+            case ADDR_VSYNC:
+                VSYNC._raw = data;
+                if (!VSYNC.Enabled) {
+                    MemoryLine = 0;
+                    MemoryColumn = 0;
+                }
+                break;
             TIA_WRITE(VBLANK); // Write: VBLANK set-clear (D7-6,D1)
             TIA_WRITE(NUSIZ0); // Write: Number-size player-missle 0 (D5-0)
             TIA_WRITE(NUSIZ1); // Write: Number-size player-missle 1 (D5-0)
