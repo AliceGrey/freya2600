@@ -66,7 +66,7 @@ uint8_t Emulator::ReadByte(word address)
 
     // RIOT RAM
     if (address >= 0x80 && address <= 0xFF) {
-        //return RAM[address - 0x80];
+        return RAM[address - 0x80];
     }
     // RIOT (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {

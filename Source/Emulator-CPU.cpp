@@ -64,7 +64,7 @@ void Emulator::TickCPU()
         I = 0;
         break;
 
-    // RTS (Return From Subroutme)
+    // RTS (Return From Subroutine)
     case 0x60:
         PC = PopWord() + 1;
         break;
