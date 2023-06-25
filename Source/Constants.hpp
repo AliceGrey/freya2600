@@ -24,13 +24,6 @@ constexpr size_t VSYNC_LINES = 3;
 constexpr size_t VBLANK_LINES = 37;
 constexpr size_t OVERSCAN_LINES = 30;
 
-enum PPUState {
-    IN_VBLANK,
-    IN_HBLANK,
-    VISIBLE,
-    IN_OVERSCAN
-};
-
 
 //WRITE TIA
 constexpr uint16_t ADDR_VSYNC   = 0x00;  // Write: VSYNC set-clear (D1)
@@ -94,5 +87,21 @@ constexpr uint16_t ADDR_INPT2   = 0x0A;  // Read: Pot port D7
 constexpr uint16_t ADDR_INPT3   = 0x0B;  // Read: Pot port D7
 constexpr uint16_t ADDR_INPT4   = 0x0C;  // Read: P1 joystick trigger: D7
 constexpr uint16_t ADDR_INPT5   = 0x0D;  // Read: P2 joystick trigger: D7
+
+//PIA Registers
+
+//IO
+constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.) 
+constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output 
+constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only) 
+constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input) 
+
+//TIMERS
+constexpr uint16_t ADDR_INTIM   = 0x284; // Timer output (read only) 
+constexpr uint16_t ADDR_TIM1T   = 0x294; // Set 1 clock interval (838 nanosecond/interval) 
+constexpr uint16_t ADDR_TIM8T   = 0x295; // Set 8 clock interval (6.7 microsecond/interval)  
+constexpr uint16_t ADDR_TIM64T  = 0x296; // Set 64 clock interval (53.6 microsecond/interval)   
+constexpr uint16_t ADDR_T1024T  = 0x297; // set 1024 clock interval (858.2 microsecond/interval)   
+
 
 #endif // CONSTANTS_HPP

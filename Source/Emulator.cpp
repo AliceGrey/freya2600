@@ -139,6 +139,7 @@ void Emulator::Run()
             uint64_t beforeInstCycles = CPUCycleCount;
             
             TickCPU();
+            TickPIA();
 
             uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
 

@@ -12,6 +12,8 @@ uint8_t Emulator::ReadByte(word address)
 
     //printf("ReadByte Address: 0x%04X\n", address);
 
+    
+    // TIA Chip
     // $00 - $7F TIA 
     // $00-$2C TIA (write)
     // $30-$3D TIA (read)
@@ -66,50 +68,33 @@ uint8_t Emulator::ReadByte(word address)
 
     }
 
-    // RIOT RAM
+    // Actual RAM
     if (address >= 0x80 && address <= 0xFF) {
         return RAM[address - 0x80];
     }
-    // RIOT (I/O, Timer)
+    // PIA (AKA RIOT) (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {
-        printf("RIOT I/O READ 0x%04hX \n", address);
-        //$0280 = (RIOT $00) - Read DRA
-        //$0281 = (RIOT $01) - Read DDRA
-        //$0282 = (RIOT $02) - Read DRB
-        //$0283 = (RIOT $03) - Read DDRB
-        //$0284 = (RIOT $04) - Read timer, disable interrupt (2)
-        //$0285 = (RIOT $05) - Read interrupt flag
-        //$0286 = (RIOT $06) - Read timer, disable interrupt (2)
-        //$0287 = (RIOT $07) - Read interrupt flag
-        //$0288 = (RIOT $08) - Read DRA
-        //$0289 = (RIOT $09) - Read DDRA
-        //$028A = (RIOT $0A) - Read DRB
-        //$028B = (RIOT $0B) - Read DDRB
-        //$028C = (RIOT $0C) - Read timer, enable interrupt (2)
-        //$028D = (RIOT $0D) - Read interrupt flag
-        //$028E = (RIOT $0E) - Read timer, enable interrupt (2)
-        //$028F = (RIOT $0F) - Read interrupt flag
-        //$0290 = (RIOT $10) - Read DRA
-        //$0291 = (RIOT $11) - Read DDRA
-        //$0292 = (RIOT $12) - Read DRB
-        //$0293 = (RIOT $13) - Read DDRB
-        //$0294 = (RIOT $14) - Read timer, disable interrupt (2)
-        //$0295 = (RIOT $15) - Read interrupt flag
-        //$0296 = (RIOT $16) - Read timer, disable interrupt (2)
-        //$0297 = (RIOT $17) - Read interrupt flag
-        //$0298 = (RIOT $18) - Read DRA
-        //$0299 = (RIOT $19) - Read DDRA
-        //$029A = (RIOT $1A) - Read DRB
-        //$029B = (RIOT $1B) - Read DDRB
-        //$029C = (RIOT $1C) - Read timer, enable interrupt (2)
-        //$029D = (RIOT $1D) - Read interrupt flag
-        //$029E = (RIOT $1E) - Read timer, enable interrupt (2)
-        //$029F = (RIOT $1F) - Read interrupt flag
+        switch (address) {
+            //IO
+            //TODO
+            // constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.) 
+            // constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output 
+            // constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only) 
+            // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input) 
+
+            case ADDR_INTIM:  // Timer output (read only) 
+                return INTIM; //TODO: Make this functional
+
+            default:
+                printf("RIOT I/O READ 0x%04hX \n", address);
+                break;
+        }
     }
 
     // MAX GO AWAY STOP ATTACKING ME
     // - SLW 2021
 
+    //TODO
     // RAMR
     // if (address >= 0x1080 && address <= 0x11FF) {
     //     return EXTRAM[address - 0x1080];
@@ -136,6 +121,7 @@ uint8_t Emulator::ReadByte(word address)
     // 16K    4      -    -    0    1    2    3    -    -
     // 32K    8      0    1    2    3    4    5    6    7
     if (address >= 0x1200 && address <= 0x1FFF) {
+        //TODO
         
         // Execute functions 
     }
@@ -148,7 +134,8 @@ void Emulator::WriteByte(word address, byte data)
     ++CPUCycleCount;
 
     address = (address & 0b0001'1111'1111'1111);
-
+    
+    // TIA Chip
     // $00 - $7F TIA 
     // $00-$2C TIA (write)
     // $30-$3D TIA (read)
@@ -241,46 +228,40 @@ void Emulator::WriteByte(word address, byte data)
         //printf("ILLEGAL WRITE IN TIA AREA 0x%04hX \n", address);
     }
 
-    // RIOT RAM
+    // Actual RAM
     if (address >= 0x80 && address <= 0xFF) {
         RAM[address - 0x80] = data;
     }
 
-    // RIOT (I/O, Timer)
+    // PIA (AKA RIOT) (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {
-        printf("RIOT I/O WRITE 0x%04hX \n", address);
-        //$0280 = (RIOT $00) - Write DRA
-        //$0281 = (RIOT $01) - Write DDRA
-        //$0282 = (RIOT $02) - Write DRB
-        //$0283 = (RIOT $03) - Write DDRB
-        //$0284 = (RIOT $04) - Write edge detect control - negative edge, disable int (1)
-        //$0285 = (RIOT $05) - Write edge detect control - positive edge, disable int (1)
-        //$0286 = (RIOT $06) - Write edge detect control - negative edge, enable int (1)
-        //$0287 = (RIOT $07) - Write edge detect control - positive edge, enable int (1)
-        //$0288 = (RIOT $08) - Write DRA
-        //$0289 = (RIOT $09) - Write DDRA
-        //$028A = (RIOT $0A) - Write DRB
-        //$028B = (RIOT $0B) - Write DDRB
-        //$028C = (RIOT $0C) - Write edge detect control - negative edge, disable int (1)
-        //$028D = (RIOT $0D) - Write edge detect control - positive edge, disable int (1)
-        //$028E = (RIOT $0E) - Write edge detect control - negative edge, enable int (1)
-        //$028F = (RIOT $0F) - Write edge detect control - positive edge, enable int (1)
-        //$0290 = (RIOT $10) - Write DRA
-        //$0291 = (RIOT $11) - Write DDRA
-        //$0292 = (RIOT $12) - Write DRB
-        //$0293 = (RIOT $13) - Write DDRB
-        //$0294 = (RIOT $14) - Write timer (div by 1)    - disable int (2)
-        //$0295 = (RIOT $15) - Write timer (div by 8)    - disable int (2)
-        //$0296 = (RIOT $16) - Write timer (div by 64)   - disable int (2)
-        //$0297 = (RIOT $17) - Write timer (div by 1024) - disable int (2)
-        //$0298 = (RIOT $18) - Write DRA
-        //$0299 = (RIOT $19) - Write DDRA
-        //$029A = (RIOT $1A) - Write DRB
-        //$029B = (RIOT $1B) - Write DDRB
-        //$029C = (RIOT $1C) - Write timer (div by 1)    - enable int (2)
-        //$029D = (RIOT $1D) - Write timer (div by 8)    - enable int (2)
-        //$029E = (RIOT $1E) - Write timer (div by 64)   - enable int (2)
-        //$029F = (RIOT $1F) - Write timer (div by 1024) - enable int (2)
+        switch (address) {
+            //TODO: Test this
+            //IO
+            //TODO
+            // constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.) 
+            // constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output 
+            // constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only) 
+            // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input) 
+            
+            //TIMERS
+            case ADDR_TIM1T:  // Set 1 clock interval (838 nanosecond/interval)
+                TIM1T = data*1;
+                break;
+            case ADDR_TIM8T:  // Set 8 clock interval (6.7 microsecond/interval)  
+                TIM8T = data*8;
+                break;
+            case ADDR_TIM64T:  // Set 64 clock interval (53.6 microsecond/interval) 
+                TIM64T = data*64;
+                break;
+            case ADDR_T1024T:  // set 1024 clock interval (858.2 microsecond/interval) 
+                TIM1T = data*1024;
+                break;
+            default:
+                 printf("RIOT I/O WRITE 0x%04hX \n", address);
+                 break;
+        }
+
     }
 
     // // RAMW
@@ -296,7 +277,7 @@ void Emulator::WriteByte(word address, byte data)
         currentBank = data;
         printf("Switched to ROM bank: %d\n", currentBank);
     }
-
+    //TODO: DO we need this? Does the above replace this?
     //BANK
     //if (address == 0x3F) {
     //    ROMBank = (data & 0b00000011);
@@ -311,6 +292,7 @@ void Emulator::WriteByte(word address, byte data)
     // 16K    4      -    -    0    1    2    3    -    -
     // 32K    8      0    1    2    3    4    5    6    7
     if (address >= 0x1200 && address <= 0x1FFF) {
+        //TODO
         
         // Execute functions 
     }

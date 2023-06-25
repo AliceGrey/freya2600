@@ -186,6 +186,25 @@ public:
         byte SR;
     };
 
+    // PIA Timers
+    union {
+        struct {
+            // 1 Clock Timer
+            byte TIM1T;
+
+            // 8 Clock Timer
+            byte TIM8T;
+
+            // 64 Clock Timer
+            byte TIM64T;
+
+            // 1024 Clock Timer
+            byte T1024T;
+        };
+
+        byte INTIM;
+    };
+
     union {
         struct {
             byte : 1;
@@ -221,6 +240,13 @@ public:
     GRP_t GRP0;
 
     GRP_t GRP1;
+
+    enum PPUState {
+    IN_VBLANK,
+    IN_HBLANK,
+    VISIBLE,
+    IN_OVERSCAN
+};
 
     union {
         struct {
@@ -327,6 +353,8 @@ public:
     void TickCPU();
 
     void TickTIA();
+
+    void TickPIA();
 
     byte ReadByte(word address);
 
