@@ -165,7 +165,7 @@ void Emulator::LoadCartridge(const char * filename)
     // Calculate the number of ROM banks
     int numBanks = fileSize / ROM_BANK_SIZE;
     if (numBanks > MAX_BANKS) {
-        printf("'%s' is not a valid Atari 2600 ROM, the file is too large.\n");
+        printf("'%s' is not a valid Atari 2600 ROM, the file is too large.\n", filename);
         exit(1);
     }
 
@@ -219,7 +219,7 @@ void Emulator::Run()
 
             uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
 
-            printf("Instruction took %llu cycles\n", deltaInstCycles);
+            printf("Instruction took %lu cycles\n", deltaInstCycles);
 
             for (uint64_t i = 0; i < deltaInstCycles; ++i) {
                 TickPIA();
@@ -239,7 +239,7 @@ void Emulator::Run()
 
         uint64_t deltaFrameCycles = CPUCycleCount - beforeFrameCycles;
 
-        //printf("Frame took %llu cycles\n", deltaFrameCycles);
+        printf("Frame took %lu cycles\n", deltaFrameCycles);
 
         int pitch;
         uint8_t * pixels = nullptr;
@@ -289,7 +289,7 @@ void Emulator::printRAMGrid(const uint8_t* RAM) {
     const char * sep = "   +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+\n";
 
     // Print separator line
-    printf(sep);
+    printf("%s", sep);
 
     // Print rows
     for (int row = 0x80; row <= 0xF0; row += 0x10) {
@@ -304,6 +304,6 @@ void Emulator::printRAMGrid(const uint8_t* RAM) {
         printf("|\n");
 
         // Print separator line
-        printf(sep);
+        printf("%s", sep);
     }
 }

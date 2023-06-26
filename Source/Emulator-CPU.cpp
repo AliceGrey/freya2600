@@ -40,7 +40,7 @@ void Emulator::TickCPU()
     //printf("PC=%04X OP=%02X inst=%d mode=%d group=%d\n", PC - 1, opcode._raw, opcode.inst, opcode.mode, opcode.group);
 
     switch (opcode._raw) {
-    // BRK:
+    // BRK (Break Command, Software Interrupt)
     case 0x00:
         I = 1;
         PushWord(PC + 2);
@@ -49,7 +49,7 @@ void Emulator::TickCPU()
         CPUCycleCount += 1;
         break;
 
-    // JSR
+    // JSR (Jump To Subroutine)
     case 0x20:
         PushWord(PC + 1);
         PC = NextWord();
