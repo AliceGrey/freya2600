@@ -164,6 +164,28 @@ public:
     bool WSYNC;
 
     ///
+    /// CPU
+    ///
+
+     union OPCODE_t {
+        struct {
+            uint8_t group : 2;
+            uint8_t mode : 3;
+            uint8_t inst : 3;
+        };
+
+        struct {
+            uint8_t : 5;
+            uint8_t test : 1;
+            uint8_t flag : 2;
+        };
+        
+        uint8_t _raw;
+    };
+
+    OPCODE_t opcode;
+
+    ///
     /// Cartridge
     ///
 
@@ -196,6 +218,8 @@ public:
 
     uintmax_t FrameCount = 0;
 
+    FILE* tLog;
+
     Emulator();
 
     ~Emulator();
@@ -217,6 +241,10 @@ public:
     void WriteByte(word address, byte data);
 
     void printRAMGrid(const uint8_t* RAM);
+
+    void printTraceLogHeaders(const char* filename);
+
+    void printRegisters(byte data);
 
     inline byte NextByte() {
         return ReadByte(PC++);

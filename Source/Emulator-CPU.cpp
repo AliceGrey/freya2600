@@ -9,23 +9,7 @@ void Emulator::TickCPU()
         return;
     }
     
-    union OPCODE_t {
-        struct {
-            uint8_t group : 2;
-            uint8_t mode : 3;
-            uint8_t inst : 3;
-        };
-
-        struct {
-            uint8_t : 5;
-            uint8_t test : 1;
-            uint8_t flag : 2;
-        };
-        
-        uint8_t _raw;
-    };
-
-    OPCODE_t opcode = {._raw = NextByte() };
+    opcode = {._raw = NextByte() };
 
     #define SET_NZ(VALUE) \
         N = ((VALUE) & 0x80); \
@@ -566,6 +550,7 @@ void Emulator::TickCPU()
     }
 
     // poof
+    printRegisters(data);
     //printf("SP=%02X A=%02X X=%02X Y=%02X\n",SP, A, X, Y);
     //printf("C=%02X Z=%02X I=%02X D=%02X V=%02X N=%02X\n", C, Z, I, D, V, N);
     //printRAMGrid(RAM);
