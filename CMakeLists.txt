@@ -20,6 +20,12 @@ add_executable(
     ${_source_list}
 )
 
+target_include_directories(
+    Freya2600
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/Source
+)
+
 target_link_libraries(
     Freya2600
     PRIVATE

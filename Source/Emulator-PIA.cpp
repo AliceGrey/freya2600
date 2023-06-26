@@ -42,9 +42,9 @@ void Emulator::TickPIA()
     read after it passed zero.*/
 
 
-    ++TimerCycles;
-    if (TimerCycles == TimerInterval) {
-        TimerCycles = 0;
+    ++TimerCounter;
+    if (TimerCounter == TimerInterval) {
+        TimerCounter = 0;
 
         if (INTIM == 0) {
             TimerInterval = 1;

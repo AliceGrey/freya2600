@@ -1,148 +1,21 @@
 #ifndef EMULATOR_HPP
 #define EMULATOR_HPP
 
-#include "Constants.hpp"
-
-#include <cstdint>
+#include <Config.hpp>
+#include <Constants.hpp>
+#include <Types/CPU.hpp>
+#include <Types/PIA.hpp>
+#include <Types/TIA.hpp>
 
 #include <SDL.h>
-
-typedef uint8_t byte;
-
-typedef uint16_t word;
-
-// typedef uint16_t uint13_t; // shhh
-
-union NUSIZ_t {
-    struct {
-        byte PSIZEa : 1;
-        byte PSIZEb : 1;
-        byte PSIZEc : 1;
-        byte : 1;
-        byte MSIZEa : 1;
-        byte MSIZEb : 1;
-        byte : 2;
-    };
-    byte _raw;
-};
-
-union COLUP_t {
-    struct {
-        byte : 1;
-        byte LUM0 : 1;
-        byte LUM1 : 1;
-        byte LUM2 : 1;
-        byte COL0 : 1;
-        byte COL1 : 1;
-        byte COL2 : 1;
-        byte COL3 : 1;
-    };
-    struct {
-        byte : 1;
-        byte Index : 1;
-    };
-    byte _raw;
-};
-
-union REFP_t {
-    struct {
-        byte : 3;
-        byte Enabled : 1;
-        byte : 4;
-    };
-    byte _raw;
-};
-
-union AUDC_t {
-    struct {
-        byte D0: 1;
-        byte D1: 1;
-        byte D2: 1;
-        byte D3: 1;
-        byte : 4;
-    };
-    byte _raw;
-};
-
-union AUDF_t {
-    struct {
-        byte D0: 1;
-        byte D1: 1;
-        byte D2: 1;
-        byte D3: 1;
-        byte D4: 1;
-        byte : 3;
-    };
-    byte _raw;
-};
-
-union AUDV_t {
-    struct {
-        byte D0: 1;
-        byte D1: 1;
-        byte D2: 1;
-        byte D3: 1;
-        byte : 4;
-    };
-    byte _raw;
-};
-
-union GRP_t {
-    struct {
-        byte Dot0Enabled : 1;
-        byte Dot1Enabled : 1;
-        byte Dot2Enabled : 1;
-        byte Dot3Enabled : 1;
-        byte Dot4Enabled : 1;
-        byte Dot5Enabled : 1;
-        byte Dot6Enabled : 1;
-        byte Dot7Enabled : 1;
-    };
-    byte _raw;
-};
-
-union ENA_t {
-    struct {
-        byte : 1;
-        byte Enabled : 1;
-        byte : 6;
-    };
-    byte _raw;
-};
-
-union HM_t {
-    struct {
-        byte : 4;
-        byte D4: 1;
-        byte D5: 1;
-        byte D6: 1;
-        byte D7: 1;
-        
-    };
-    byte _raw;
-};
-
-union VDEL_t {
-    struct {
-        byte Enabled : 1;
-        byte : 7;
-    };
-    byte _raw;
-};
-
-union RESMP_t {
-    struct {
-        byte: 1;
-        byte Reset: 1;
-        byte : 6;
-    };
-    byte _raw;
-};
-
 
 class Emulator
 {
 public:
+
+    ///
+    /// CPU / MOS6507
+    ///
 
     // Program Counter
     word PC;
@@ -186,142 +59,117 @@ public:
         byte SR;
     };
 
-    byte INTIM;
-
-    union {
-        struct {
-            byte Timer : 1;
-            byte EdgeDetect : 1; // TODO: ???
-            byte : 6;
-        };
-        byte _raw;
-    } TIMINT; // Cowabunga
-
-    unsigned TimerInterval;
-
-    unsigned TimerCycles;
-
-
-    union {
-        struct {
-            byte : 1;
-            byte Enabled : 1;
-            byte : 6;
-        };
-        byte _raw;
-    } VSYNC;
-
-    union {
-        struct {
-            byte : 1;
-            byte Enabled : 1;
-            byte : 4;
-            byte LatchEnabled : 1;
-            byte GroundEnabled : 1;
-        };
-        byte _raw;
-    } VBLANK;
-
-    NUSIZ_t NUSIZ0;
-
-    NUSIZ_t NUSIZ1;
-
-    COLUP_t COLUP0;
-
-    COLUP_t COLUP1;
-
-    COLUP_t COLUPF;
-
-    COLUP_t COLUBK;
-
-    GRP_t GRP0;
-
-    GRP_t GRP1;
-
-    enum PPUState {
-        IN_VBLANK,
-        IN_HBLANK,
-        VISIBLE,
-        IN_OVERSCAN
-    };
-
-    union {
-        struct {
-            byte ReflectEnabled : 1;
-            byte ScoreColorMode : 1;
-            byte Priority: 1;
-            byte : 1;
-            byte BSIZE0 : 1;
-            byte BSIZE1 : 1;
-            byte : 2;
-        };
-        byte _raw;
-    } CTRLPF;
-
-    REFP_t REFP0;
-
-    REFP_t REFP1;
-
-    byte PF[3];
-
-    AUDC_t AUDC0;
-
-    AUDC_t AUDC1;
-
-    AUDF_t AUDF0;
-
-    AUDF_t AUDF1;
-
-    AUDV_t AUDV0;
-    
-    AUDV_t AUDV1;
-
-    ENA_t ENAM0; // Enable Missile 0
-
-    ENA_t ENAM1; // Enable Missile 1
-
-    ENA_t ENABL; // Enable Ball
-
-    HM_t HMP0; // Horizontal Motion Player 0
-
-    HM_t HMP1; // Horizontal Motion Player 1
-
-    HM_t HMM0; // Horizontal Motion Missile 0
-
-    HM_t HMM1; // Horizontal Motion Missile 1
-
-    HM_t HMBL; // Horizontal Motion Ball 1
-
-    VDEL_t VDELP0; // Vertical Delay Player 0
-    
-    VDEL_t VDELP1; // Vertical Delay Player 1
-    
-    VDEL_t VDELBL; // Vertical Delay Ball 1
-
-    RESMP_t RESMP0; // Reset Missile Player 0
-    
-    RESMP_t RESMP1; // Reset Missile Player 1
-
-    union {
-        struct {
-            byte P1DIFF : 1;
-            byte P0DIFF : 1;
-            byte : 2;
-            byte ColorEnabled : 1;
-            byte : 1;
-            byte SelectUp : 1;
-            byte ResetUp : 1;
-        };
-        byte _raw;
-    } SWCHB;
-
-    bool WSYNC;
+    ///
+    /// RAM I/O Timer / RIOT
+    /// Peripheral Interface Adaptor / PIA
+    ///
 
     byte RAM[0x80];
 
+    // Port A I/O Data
+    byte SWCHA;
+
+    // Port A I/O Direction
+    byte SWACNT;
+
+    // Port B I/O Data, hardwired to Console Switches
+    ConsoleSwitches SWCHB;
+
+    // TODO: How hard is "hardwired"
+    // Port B I/O Direction
+    byte SWBCNT;
+
+    // Timer Countdown
+    byte INTIM;
+
+    TimerInterrupt TIMINT; // Cowabunga
+
+    // Number of cycles between ticks of the timer
+    unsigned TimerInterval;
+
+    // Number of cycles since the last tick of the timer
+    unsigned TimerCounter;
+
+    ///
+    /// Television Interface Adaptor / TIA
+    ///
+
+    VerticalSync VSYNC;
+
+    VerticalBlank VBLANK;
+
+    PlayerSizeCount NUSIZ0;
+
+    PlayerSizeCount NUSIZ1;
+
+    ColorPicker COLUP0;
+
+    ColorPicker COLUP1;
+
+    ColorPicker COLUPF;
+
+    ColorPicker COLUBK;
+
+    byte GRP0;
+
+    byte GRP1;
+
+    PlayerFieldControl CTRLPF;
+
+    PlayerReflect REFP0;
+
+    PlayerReflect REFP1;
+
+    byte PF[3];
+
+    AudioControl AUDC0;
+
+    AudioControl AUDC1;
+
+    AudioFrequencyDivide AUDF0;
+
+    AudioFrequencyDivide AUDF1;
+
+    AudioVolume AUDV0;
+    
+    AudioVolume AUDV1;
+
+    BallMissileEnable ENAM0; // Enable Missile 0
+
+    BallMissileEnable ENAM1; // Enable Missile 1
+
+    BallMissileEnable ENABL; // Enable Ball
+
+    HorizontalMotion HMP0; // Horizontal Motion Player 0
+
+    HorizontalMotion HMP1; // Horizontal Motion Player 1
+
+    HorizontalMotion HMM0; // Horizontal Motion Missile 0
+
+    HorizontalMotion HMM1; // Horizontal Motion Missile 1
+
+    HorizontalMotion HMBL; // Horizontal Motion Ball 1
+
+    VerticalDelay VDELP0; // Vertical Delay Player 0
+    
+    VerticalDelay VDELP1; // Vertical Delay Player 1
+    
+    VerticalDelay VDELBL; // Vertical Delay Ball 1
+
+    MissileReset RESMP0; // Reset Missile Player 0
+    
+    MissileReset RESMP1; // Reset Missile Player 1
+
+    // CPU is waiting for H-Blank
+    bool WSYNC;
+
+    ///
+    /// Cartridge
+    ///
+
     byte ROM[MAX_BANKS][ROM_BANK_SIZE];
 
-    int currentBank; // currently selected rombank
+    int ROMBank; // currently selected bank of ROM
 
     byte EXTRAM[0x100];
 
@@ -341,8 +189,6 @@ public:
     unsigned MemoryLine = 0;
 
     unsigned MemoryColumn = 0;
-
-    PPUState DrawState;
 
     uintmax_t CPUCycleCount = 0;
 

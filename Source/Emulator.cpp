@@ -80,7 +80,7 @@ void Emulator::Reset()
     INTIM = 0x00;
     TIMINT._raw = 0x00;
     TimerInterval = 1;
-    TimerCycles = 0;
+    TimerCounter = 0;
 
     VSYNC._raw = 0x00;
     VBLANK._raw = 0x00;
@@ -93,8 +93,8 @@ void Emulator::Reset()
     COLUPF._raw = 0x00;
     COLUBK._raw = 0x00;
 
-    GRP0._raw = 0x00;
-    GRP1._raw = 0x00;
+    GRP0 = 0x00;
+    GRP1 = 0x00;
 
     CTRLPF._raw = 0x00;
     REFP0._raw = 0x00;
@@ -138,7 +138,7 @@ void Emulator::Reset()
 
     memset(RAM, 0xFF, sizeof(RAM));
 
-    currentBank = 0;
+    ROMBank = 0;
 
     // TODO: EXTRAM ?
 }

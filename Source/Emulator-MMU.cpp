@@ -113,9 +113,8 @@ uint8_t Emulator::ReadByte(word address)
     // ROM
     if (address >= 0x1000 && address <= 0x1FFF) {
         //return ROM[ROMBank][address - 0x1000];
-        int bank = currentBank;
         int offset = (address - BANK_SWITCH_ADDRESS) % ROM_BANK_SIZE;
-        return ROM[bank][offset];
+        return ROM[ROMBank][offset];
     }
 
     //sTr0be BANK
@@ -177,8 +176,6 @@ void Emulator::WriteByte(word address, byte data)
             TIA_WRITE(AUDF1);  // Write: Audio frequency 1 (D3-0)
             TIA_WRITE(AUDV0);  // Write: Audio volume 0 (D3-0)
             TIA_WRITE(AUDV1);  // Write: Audio volume 1 (D3-0)
-            TIA_WRITE(GRP0);   // Write: Graphics player 0 (D7-0)
-            TIA_WRITE(GRP1);   // Write: Graphics player 1 (D7-0)
             TIA_WRITE(ENAM0);  // Write: Graphics (enable) missle 0 (D1)
             TIA_WRITE(ENAM1);  // Write: Graphics (enable) missle 1 (D1)
             TIA_WRITE(ENABL);  // Write: Graphics (enable) ball (D1)
@@ -193,6 +190,12 @@ void Emulator::WriteByte(word address, byte data)
             TIA_WRITE(RESMP0); // Write: Reset missle 0 to player 0 (D1)
             TIA_WRITE(RESMP1); // Write: Reset missle 1 to player 1 (D1)
 
+            case ADDR_GRP0:    // Write: Graphics player 0 (D7-0)
+                GRP0 = data;
+                break;
+            case ADDR_GRP1:    // Write: Graphics player 1 (D7-0)
+                GRP1 = data;
+                break;
             case ADDR_PF0:    // Write: Playfield register byte 0 (D7-4)
                 PF[0] = data;
                 break;
@@ -243,7 +246,7 @@ void Emulator::WriteByte(word address, byte data)
     if (address >= 0x280 && address <= 0x297) {
 
         if (address >= ADDR_TIM1T && address <= ADDR_T1024T) {
-            TimerCycles = 0;
+            TimerCounter = 0;
             TimerInterval = TIMER_INTERVALS[address - ADDR_TIM1T];
             INTIM = data;
             TIMINT.Timer = 0;
@@ -274,8 +277,8 @@ void Emulator::WriteByte(word address, byte data)
     }
 
     if (address == BANK_SWITCH_ADDRESS) {
-        currentBank = data;
-        printf("Switched to ROM bank: %d\n", currentBank);
+        ROMBank = data;
+        printf("Switched to ROM bank: %d\n", ROMBank);
     }
     //TODO: DO we need this? Does the above replace this?
     //BANK
