@@ -186,24 +186,21 @@ public:
         byte SR;
     };
 
-    // PIA Timers
+    byte INTIM;
+
     union {
         struct {
-            // 1 Clock Timer
-            byte TIM1T;
-
-            // 8 Clock Timer
-            byte TIM8T;
-
-            // 64 Clock Timer
-            byte TIM64T;
-
-            // 1024 Clock Timer
-            byte T1024T;
+            byte Timer : 1;
+            byte EdgeDetect : 1; // TODO: ???
+            byte : 6;
         };
+        byte _raw;
+    } TIMINT; // Cowabunga
 
-        byte INTIM;
-    };
+    unsigned TimerInterval;
+
+    unsigned TimerCycles;
+
 
     union {
         struct {
@@ -242,11 +239,11 @@ public:
     GRP_t GRP1;
 
     enum PPUState {
-    IN_VBLANK,
-    IN_HBLANK,
-    VISIBLE,
-    IN_OVERSCAN
-};
+        IN_VBLANK,
+        IN_HBLANK,
+        VISIBLE,
+        IN_OVERSCAN
+    };
 
     union {
         struct {
@@ -305,7 +302,20 @@ public:
     
     RESMP_t RESMP1; // Reset Missile Player 1
 
-    bool WSYNC = false;
+    union {
+        struct {
+            byte P1DIFF : 1;
+            byte P0DIFF : 1;
+            byte : 2;
+            byte ColorEnabled : 1;
+            byte : 1;
+            byte SelectUp : 1;
+            byte ResetUp : 1;
+        };
+        byte _raw;
+    } SWCHB;
+
+    bool WSYNC;
 
     byte RAM[0x80];
 
@@ -344,11 +354,11 @@ public:
 
     ~Emulator();
 
-    void Run();
-
     void Reset();
 
     void LoadCartridge(const char * filename);
+
+    void Run();
 
     void TickCPU();
 

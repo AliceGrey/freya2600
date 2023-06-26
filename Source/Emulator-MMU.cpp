@@ -12,9 +12,9 @@ uint8_t Emulator::ReadByte(word address)
 
     //printf("ReadByte Address: 0x%04X\n", address);
 
-    
+
     // TIA Chip
-    // $00 - $7F TIA 
+    // $00 - $7F TIA
     // $00-$2C TIA (write)
     // $30-$3D TIA (read)
     if (address >= 0x00 && address <= 0x3D) {
@@ -77,13 +77,19 @@ uint8_t Emulator::ReadByte(word address)
         switch (address) {
             //IO
             //TODO
-            // constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.) 
-            // constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output 
-            // constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only) 
-            // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input) 
+            // constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.)
+            // constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output
+            case ADDR_SWCHB: // Port B; console switches (read only)
+                return SWCHB._raw;
+            // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input)
 
-            case ADDR_INTIM:  // Timer output (read only) 
-                return INTIM; //TODO: Make this functional
+            case ADDR_INTIM:  // Timer output (read only)
+                TIMINT.Timer = 0;
+                return INTIM;
+
+            case ADDR_TIMINT: // Timer Interupt Flag
+                TIMINT.EdgeDetect = 0;
+                return TIMINT._raw;
 
             default:
                 printf("RIOT I/O READ 0x%04hX \n", address);
@@ -122,8 +128,8 @@ uint8_t Emulator::ReadByte(word address)
     // 32K    8      0    1    2    3    4    5    6    7
     if (address >= 0x1200 && address <= 0x1FFF) {
         //TODO
-        
-        // Execute functions 
+
+        // Execute functions
     }
 
     return 0;
@@ -134,9 +140,9 @@ void Emulator::WriteByte(word address, byte data)
     ++CPUCycleCount;
 
     address = (address & 0b0001'1111'1111'1111);
-    
+
     // TIA Chip
-    // $00 - $7F TIA 
+    // $00 - $7F TIA
     // $00-$2C TIA (write)
     // $30-$3D TIA (read)
     if (address >= 0x00 && address <= 0x2C) {
@@ -198,7 +204,7 @@ void Emulator::WriteByte(word address, byte data)
                 break;
             case ADDR_WSYNC:  // Write: Wait for leading edge of hrz. blank (strobe)
                 WSYNC = true;
-                break; 
+                break;
             case ADDR_RSYNC:  // Write: Reset hrz. sync counter (strobe)
                 break;
             case ADDR_RESP0:  // Write: Reset player 0 (strobe)
@@ -217,7 +223,7 @@ void Emulator::WriteByte(word address, byte data)
                 break;
             case ADDR_CXCLR:  // Write: Clear collision latches (strobe)
                 break;
-            
+
             default:
                 printf("UNDEFINTED WRITE IN TIA AREA 0x%04hX \n", address);
                 break;
@@ -235,33 +241,27 @@ void Emulator::WriteByte(word address, byte data)
 
     // PIA (AKA RIOT) (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {
+
+        if (address >= ADDR_TIM1T && address <= ADDR_T1024T) {
+            TimerCycles = 0;
+            TimerInterval = TIMER_INTERVALS[address - ADDR_TIM1T];
+            INTIM = data;
+            TIMINT.Timer = 0;
+            return;
+        }
+
         switch (address) {
-            //TODO: Test this
             //IO
             //TODO
-            // constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.) 
-            // constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output 
-            // constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only) 
-            // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input) 
-            
-            //TIMERS
-            case ADDR_TIM1T:  // Set 1 clock interval (838 nanosecond/interval)
-                TIM1T = data*1;
-                break;
-            case ADDR_TIM8T:  // Set 8 clock interval (6.7 microsecond/interval)  
-                TIM8T = data*8;
-                break;
-            case ADDR_TIM64T:  // Set 64 clock interval (53.6 microsecond/interval) 
-                TIM64T = data*64;
-                break;
-            case ADDR_T1024T:  // set 1024 clock interval (858.2 microsecond/interval) 
-                TIM1T = data*1024;
-                break;
+            // constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.)
+            // constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output
+            // constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only)
+            // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input)
+
             default:
                  printf("RIOT I/O WRITE 0x%04hX \n", address);
                  break;
         }
-
     }
 
     // // RAMW
@@ -293,7 +293,7 @@ void Emulator::WriteByte(word address, byte data)
     // 32K    8      0    1    2    3    4    5    6    7
     if (address >= 0x1200 && address <= 0x1FFF) {
         //TODO
-        
-        // Execute functions 
+
+        // Execute functions
     }
 }

@@ -19,10 +19,7 @@ operations and keep them synchronized with the hardware (TIA chip).
 */
 void Emulator::TickPIA()
 {
-    //TODO: Figure out if we need this
-    if (WSYNC) {
-        return;
-    }
+
     /*
     The timer is set by writing a value or count (from 1 to 255) to the address of
     the desired interval setting according to the following table :
@@ -31,24 +28,11 @@ void Emulator::TickPIA()
     295 8 clocks TIM8T
     296 64 clocks TIM64T
     297 1024 clocks T1024T
+    
     For example, if the value of 100 were written to TIM64T (HEX address 296)
     the timer would decrement to 0 in 6400 clocks (64 clocks per interval x 100
-    intervals) which would also be 6400 microprocessor machine cycles.*/
-    if (TIM1T > 0){
-        TIM1T = TIM1T - 1;
-    }
-    if (TIM8T > 0){
-        TIM8T = TIM8T - 8;
-    }
-    if (TIM64T > 0){
-        TIM64T = TIM64T - 64;
-    }
-    if (T1024T > 0){
-        T1024T = T1024T - 1024;
-    }
+    intervals) which would also be 6400 microprocessor machine cycles.
 
-    //TODO: Finish this
-    /*
     When the timer reaches zero
     The PIA decrements the value or count loaded into it once each interval
     until it reaches 0. It holds that 0 counts for one interval, then the counter
@@ -57,18 +41,17 @@ void Emulator::TickPIA()
     determine how long ago the timer zeroed out in the event the timer was
     read after it passed zero.*/
 
-    if (TIM1T = 0){
-        TIM1T = TIM1T - 1;
-    }
-    if (TIM8T = 0){
-        TIM8T = TIM8T - 1;
-    }
-    if (TIM64T = 0){
-        TIM64T = TIM64T - 1;
-    }
-    if (T1024T = 0){
-        T1024T = T1024T - 1;
-    }
-     
 
+    ++TimerCycles;
+    if (TimerCycles == TimerInterval) {
+        TimerCycles = 0;
+
+        if (INTIM == 0) {
+            TimerInterval = 1;
+            TIMINT.Timer = 1;
+        }
+
+        --INTIM;
+    }
+    
 }

@@ -97,11 +97,20 @@ constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only)
 constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input) 
 
 //TIMERS
-constexpr uint16_t ADDR_INTIM   = 0x284; // Timer output (read only) 
+constexpr uint16_t ADDR_INTIM   = 0x284; // Timer output (read only) (Disable Interupt)
+constexpr uint16_t ADDR_TIMINT  = 0x285; // Timer Interupt Flag
+
 constexpr uint16_t ADDR_TIM1T   = 0x294; // Set 1 clock interval (838 nanosecond/interval) 
 constexpr uint16_t ADDR_TIM8T   = 0x295; // Set 8 clock interval (6.7 microsecond/interval)  
 constexpr uint16_t ADDR_TIM64T  = 0x296; // Set 64 clock interval (53.6 microsecond/interval)   
-constexpr uint16_t ADDR_T1024T  = 0x297; // set 1024 clock interval (858.2 microsecond/interval)   
+constexpr uint16_t ADDR_T1024T  = 0x297; // set 1024 clock interval (858.2 microsecond/interval)
+ 
 
+constexpr unsigned TIMER_INTERVALS[] = {
+    1,      // 1 clock interval (838 nanosecond/interval)
+    8,      // 8 clock interval (6.7 microsecond/interval)
+    64,     // 64 clock interval (53.6 microsecond/interval)
+    1024    // 1024 clock interval (858.2 microsecond/interval)
+};
 
 #endif // CONSTANTS_HPP

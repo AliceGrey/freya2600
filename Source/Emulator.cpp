@@ -65,6 +65,84 @@ Emulator::~Emulator()
     SDL_Quit();
 }
 
+void Emulator::Reset()
+{
+    // $FFFC Cartridge Entrypoint
+    PC = ReadWord(0xFFFC);
+    printf("Entrypoint: %04X\n", PC);
+
+    SP = 0x00;
+    A = 0x00;
+    X = 0x00;
+    Y = 0x00;
+    SR = 0x00;
+
+    INTIM = 0x00;
+    TIMINT._raw = 0x00;
+    TimerInterval = 1;
+    TimerCycles = 0;
+
+    VSYNC._raw = 0x00;
+    VBLANK._raw = 0x00;
+
+    NUSIZ0._raw = 0;
+    NUSIZ1._raw = 0;
+
+    COLUP0._raw = 0x00;
+    COLUP1._raw = 0x00;
+    COLUPF._raw = 0x00;
+    COLUBK._raw = 0x00;
+
+    GRP0._raw = 0x00;
+    GRP1._raw = 0x00;
+
+    CTRLPF._raw = 0x00;
+    REFP0._raw = 0x00;
+    REFP1._raw = 0x00;
+
+    PF[0] = 0x00;
+    PF[1] = 0x00;
+    PF[2] = 0x00;
+
+    AUDC0._raw = 0x00;
+    AUDC1._raw = 0x00;
+    AUDF0._raw = 0x00;
+    AUDF1._raw = 0x00;
+    AUDV0._raw = 0x00;
+    AUDV1._raw = 0x00;
+
+    ENAM0._raw = 0x00;
+    ENAM1._raw = 0x00;
+    ENABL._raw = 0x00;
+
+    HMP0._raw = 0x00;
+    HMP1._raw = 0x00;
+    HMM0._raw = 0x00;
+    HMM1._raw = 0x00;
+    HMBL._raw = 0x00;
+
+    VDELP0._raw = 0x00;
+    VDELP1._raw = 0x00;
+    VDELBL._raw = 0x00;
+
+    RESMP0._raw = 0x00;
+    RESMP1._raw = 0x00;
+
+    SWCHB.P0DIFF = 0;
+    SWCHB.P1DIFF = 0;
+    SWCHB.ColorEnabled = 1;
+    SWCHB.ResetUp = 1;
+    SWCHB.SelectUp = 1;
+
+    WSYNC = false;
+
+    memset(RAM, 0xFF, sizeof(RAM));
+
+    currentBank = 0;
+
+    // TODO: EXTRAM ?
+}
+
 void Emulator::LoadCartridge(const char * filename)
 {
     //Try to open file
@@ -105,13 +183,12 @@ void Emulator::LoadCartridge(const char * filename)
     printf("ROM file loaded successfully.\n");
     printf("Number of ROM banks: %d\n", numBanks);
 
-    // $FFFC Cartridge Entrypoint
-    PC = ReadWord(0xFFFC);
-    printf("Entrypoint: %04X\n", PC);
 }
 
 void Emulator::Run()
 {
+    Reset();
+
     SDL_ShowWindow(Window);
     bool running = true;
     while (running) {
@@ -139,11 +216,14 @@ void Emulator::Run()
             uint64_t beforeInstCycles = CPUCycleCount;
             
             TickCPU();
-            TickPIA();
 
             uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
 
             printf("Instruction took %llu cycles\n", deltaInstCycles);
+
+            for (uint64_t i = 0; i < deltaInstCycles; ++i) {
+                TickPIA();
+            }
 
             for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
                 unsigned lastMemoryLine = MemoryLine;
@@ -197,7 +277,6 @@ void Emulator::Run()
     }
     
 }
-
 
 void Emulator::printRAMGrid(const uint8_t* RAM) {
     // Print top column names
