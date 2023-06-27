@@ -1019,4 +1019,5 @@ void Emulator::printRegisters()
     }
 
     fprintf(tLog, "%s", Disassemble(LastInstructionAddress));
+    fflush(tLog);
 }

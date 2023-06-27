@@ -128,15 +128,15 @@ void Emulator::Reset()
     RESMP0._raw = 0x00;
     RESMP1._raw = 0x00;
 
-    SWCHB.P0DIFF = 0;
-    SWCHB.P1DIFF = 0;
+    SWCHB._raw = 0x00;
     SWCHB.ColorEnabled = 1;
     SWCHB.ResetUp = 1;
     SWCHB.SelectUp = 1;
 
     WSYNC = false;
 
-    memset(RAM, 0xFF, sizeof(RAM));
+    // Initial version used $FF, all subsequent versions use $00
+    memset(RAM, 0x00, sizeof(RAM));
 
     ROMBank = 0;
 

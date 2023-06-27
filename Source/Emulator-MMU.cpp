@@ -230,8 +230,14 @@ void Emulator::WriteByte(word address, byte data)
                 break;
             case ADDR_CXCLR:  // Write: Clear collision latches (strobe)
                 break;
+            case ADDR_SWCHB:
+                SWCHB._raw ^= ~(data & SWBCNT);
+                break;
             case ADDR_SWBCNT:
                 SWBCNT = data;
+                break;
+            case ADDR_SWCHA:
+                SWCHA ^= ~(data & SWACNT);
                 break;
             case ADDR_SWACNT:
                 SWACNT = data;

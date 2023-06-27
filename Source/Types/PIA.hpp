@@ -6,13 +6,13 @@
 union ConsoleSwitches
 {
     struct {
-        byte P1DIFF : 1;
-        byte P0DIFF : 1;
-        byte : 2;
-        byte ColorEnabled : 1;
-        byte : 1;
-        byte SelectUp : 1;
         byte ResetUp : 1;
+        byte SelectUp : 1;
+        byte : 1;
+        byte ColorEnabled : 1;
+        byte : 2;
+        byte P0DIFF : 1;
+        byte P1DIFF : 1;
     };
 
     byte _raw;
