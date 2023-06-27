@@ -3,15 +3,16 @@
 
 #include <cstdio>
 
-uint8_t Emulator::ReadByte(word address)
+uint8_t Emulator::ReadByte(word address, bool tick /*= true*/)
 {
-    ++CPUCycleCount;
+    if (tick) {
+        ++CPUCycleCount;
+    }
 
     // bit mask
     address = (address & 0b0001'1111'1111'1111);
 
     //printf("ReadByte Address: 0x%04X\n", address);
-
 
     // TIA Chip
     // $00 - $7F TIA
@@ -152,6 +153,14 @@ void Emulator::WriteByte(word address, byte data)
                     REG._raw = data; \
                     break
 
+            case ADDR_WSYNC:  // Write: Wait for leading edge of hrz. blank (strobe)
+                WSYNC = true;
+                LastWSYNC = CPUCycleCount;
+                printf("Help\n");
+                break;
+            case ADDR_RSYNC:  // Write: Reset hrz. sync counter (strobe)
+                break;
+                
             // TIA_WRITE(VSYNC);  // Write: VSYNC set-clear (D1)
             case ADDR_VSYNC:
                 VSYNC._raw = data;
@@ -205,11 +214,6 @@ void Emulator::WriteByte(word address, byte data)
             case ADDR_PF2:    // Write: Playfield register byte 2 (D7-0)
                 PF[2] = data;
                 break;
-            case ADDR_WSYNC:  // Write: Wait for leading edge of hrz. blank (strobe)
-                WSYNC = true;
-                break;
-            case ADDR_RSYNC:  // Write: Reset hrz. sync counter (strobe)
-                break;
             case ADDR_RESP0:  // Write: Reset player 0 (strobe)
                 break;
             case ADDR_RESP1:  // Write: Reset player 1 (strobe)
@@ -225,6 +229,12 @@ void Emulator::WriteByte(word address, byte data)
             case ADDR_HMCLR:  // Write: Clear horizontal motion registers (strobe)
                 break;
             case ADDR_CXCLR:  // Write: Clear collision latches (strobe)
+                break;
+            case ADDR_SWBCNT:
+                SWBCNT = data;
+                break;
+            case ADDR_SWACNT:
+                SWACNT = data;
                 break;
 
             default:

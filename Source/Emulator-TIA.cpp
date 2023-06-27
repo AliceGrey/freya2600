@@ -150,7 +150,7 @@ constexpr uint8_t NTSC[128][3] = {
 
 void Emulator::TickTIA()
 {
-
+    ++TIACycleCount;
 
     // states = vsync, vblank, visible, overscan
     // sub-state h-blank
@@ -349,7 +349,7 @@ void Emulator::TickTIA()
         }
     }
 
-    if (MemoryColumn == 0) {
+    if (WSYNC && MemoryColumn == 0) {
         WSYNC = false;
     }
 }

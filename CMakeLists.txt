@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(SDL2 2.0.6 CONFIG REQUIRED)
 
+find_package(fmt 7.0.0 CONFIG REQUIRED)
+
 file(GLOB_RECURSE
     _source_list
     "Source/*.hpp"
@@ -30,4 +32,5 @@ target_link_libraries(
     Freya2600
     PRIVATE
         SDL2::SDL2
+        fmt::fmt
 )

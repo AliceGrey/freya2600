@@ -141,6 +141,9 @@ void Emulator::Reset()
     ROMBank = 0;
 
     // TODO: EXTRAM ?
+
+    CPUCycleCount = 0;
+    TIACycleCount = 0;
 }
 
 void Emulator::LoadCartridge(const char * filename)
@@ -213,7 +216,8 @@ void Emulator::Run()
 
         // TODO: Determine when a frame has been drawn
         bool drawing = true;
-        while (CPUCycleCount < 100){
+        // while (drawing) {
+        for (int i = 0; i < 710; ++i) {
 
             uint64_t beforeInstCycles = CPUCycleCount;
             
@@ -225,6 +229,10 @@ void Emulator::Run()
 
             for (uint64_t i = 0; i < deltaInstCycles; ++i) {
                 TickPIA();
+            }
+
+            while (WSYNC) {
+                TickTIA();
             }
 
             for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
@@ -243,6 +251,8 @@ void Emulator::Run()
 
         printf("Frame took %lu cycles\n", deltaFrameCycles);
 
+        exit(0);
+        
         int pitch;
         uint8_t * pixels = nullptr;
         SDL_LockTexture(ScreenTexture, nullptr, (void **)&pixels, &pitch);
@@ -311,49 +321,11 @@ void Emulator::printRAMGrid(const uint8_t* RAM) {
 }
 
 void Emulator::printTraceLogHeaders(const char* filename) {
-    tLog = fopen("/home/allie/log.txt", "w");
+    tLog = fopen("log.txt", "w");
     fprintf(tLog,"Loaded ROM: %s\n\n", filename);
 		fprintf(tLog,
 				"(Frame Line CPU TIA)  "
 				"( P0  P1  M0  M1  BL)  collsn   "
 				"flags   A  X  Y SP   Adr  Code\n");
 
-}
-
-void Emulator::printRegisters(byte data)
-{	
-    int P0_Position = 0;
-    int P1_Position = 0;
-    int M0_Position = 0;
-    int M1_Position = 0;
-    int BL_Position = 0;
-    int TIACollide = 0;
-    byte B = 1;
-
-	int sline = 0;
-	int cyc = CPUCycleCount;
-	int clk = CPUCycleCount*3-68;
-	if (cyc == 76)
-	{
-		cyc -= 76;
-		clk -= 228;
-		sline++;
-	}
-
-	fprintf(tLog, "\n(%5d %4d %3d %3d)  (%3d %3d %3d %3d %3d)  <%4x>  ",
-		 FrameCount, sline, cyc, clk,
-		 (P0_Position-68+5)%160, (P1_Position-68+5)%160, (M0_Position-68+4)%160,
-		 (M1_Position-68+4)%160, (BL_Position-68+4)%160, TIACollide);
-	fprintf(tLog, N & 0x80 ? "N" : "n");
-	fprintf(tLog, V 			  ? "V" : "v");
-	fprintf(tLog, B 			  ? "B" : "b");
-	fprintf(tLog, D 			  ? "D" : "d");
-	fprintf(tLog, I 			  ? "I" : "i");
-	fprintf(tLog, Z		 	      ? "Z" : "z");
-	fprintf(tLog, C 			  ? "C" : "c");
-
-		fprintf(tLog, " %02x %02x %02x %02x  ", A, X, Y, SP);
-        fprintf(tLog, "%04x: ", PC-1);
-        //fprintf(tLog, "%02x       ", opcode);
-        fprintf(tLog, "%02x %02x", opcode, data);
 }

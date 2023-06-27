@@ -59,6 +59,10 @@ public:
         byte SR;
     };
 
+    word LastInstructionAddress;
+
+    byte FetchCache[3];
+
     ///
     /// RAM I/O Timer / RIOT
     /// Peripheral Interface Adaptor / PIA
@@ -163,27 +167,7 @@ public:
     // CPU is waiting for H-Blank
     bool WSYNC;
 
-    ///
-    /// CPU
-    ///
-
-     union OPCODE_t {
-        struct {
-            uint8_t group : 2;
-            uint8_t mode : 3;
-            uint8_t inst : 3;
-        };
-
-        struct {
-            uint8_t : 5;
-            uint8_t test : 1;
-            uint8_t flag : 2;
-        };
-        
-        uint8_t _raw;
-    };
-
-    OPCODE_t opcode;
+    uintmax_t LastWSYNC = 0;
 
     ///
     /// Cartridge
@@ -236,15 +220,17 @@ public:
 
     void TickPIA();
 
-    byte ReadByte(word address);
+    byte ReadByte(word address, bool tick = true);
 
     void WriteByte(word address, byte data);
+
+    const char * Disassemble(word address);
 
     void printRAMGrid(const uint8_t* RAM);
 
     void printTraceLogHeaders(const char* filename);
 
-    void printRegisters(byte data);
+    void printRegisters();
 
     inline byte NextByte() {
         return ReadByte(PC++);
@@ -271,7 +257,6 @@ public:
         SP -= 1;
         WriteByte(SP + 1, data);
     }
-
 
     inline byte PopByte() {
         byte data = ReadByte(SP + 1);
