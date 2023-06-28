@@ -396,17 +396,11 @@ void Emulator::TickCPU()
             //TODO: Decimal Mode
             case 0b111:
                 data = ReadByte(address);
-                if( (((A + (0xff - data) + C) ^ A) & 0x80) && !((A ^ (0xff - data)) & 0x80) )
-                {
-                    V = 1;
-                } else 
-                {
-                    V = 0;
-                }
-                small_result = (((A + (0xff - data) + C) & 0x100) >> 8); 
-                A = ((A + (0xff - data) + C) & 0xff); 
-		        C = small_result;
-		        SET_NZ(A); 
+                result = A - data - (C ? 0 : 1);
+                V = ((A ^ data) & (A ^ result) & 0x80); // wtf
+                C = !(result & 0xFF00);
+                A = (result & 0xFF);
+                SET_NZ(A);
                 break;
             }
         }
