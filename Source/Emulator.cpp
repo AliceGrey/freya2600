@@ -216,8 +216,8 @@ void Emulator::Run()
 
         // TODO: Determine when a frame has been drawn
         bool drawing = true;
-        // while (drawing) {
-        for (int i = 0; i < 710; ++i) {
+        while (drawing) {
+        //for (int i = 0; i < 1000; ++i) {
 
             uint64_t beforeInstCycles = CPUCycleCount;
             
@@ -231,9 +231,9 @@ void Emulator::Run()
                 TickPIA();
             }
 
-            while (WSYNC) {
-                TickTIA();
-            }
+            //while (WSYNC) {
+                //TickTIA();
+            //}
 
             for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
                 unsigned lastMemoryLine = MemoryLine;
@@ -249,9 +249,9 @@ void Emulator::Run()
 
         uint64_t deltaFrameCycles = CPUCycleCount - beforeFrameCycles;
 
-        printf("Frame took %lu cycles\n", deltaFrameCycles);
+        //printf("Frame took %lu cycles\n", deltaFrameCycles);
 
-        exit(0);
+        //exit(0);
         
         int pitch;
         uint8_t * pixels = nullptr;

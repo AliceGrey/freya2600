@@ -156,7 +156,6 @@ void Emulator::WriteByte(word address, byte data)
             case ADDR_WSYNC:  // Write: Wait for leading edge of hrz. blank (strobe)
                 WSYNC = true;
                 LastWSYNC = CPUCycleCount;
-                printf("Help\n");
                 break;
             case ADDR_RSYNC:  // Write: Reset hrz. sync counter (strobe)
                 break;

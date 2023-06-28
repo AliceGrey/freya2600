@@ -23,6 +23,7 @@ void Emulator::TickCPU()
     byte data;
     word address;
     word result; // The 16-bit result of 8-bit math, used to look for overflows
+    byte small_result; // The 8-bit result of 8-bit math
 
     bool found = true;
 
@@ -376,6 +377,14 @@ void Emulator::TickCPU()
                 break;
 
             // SBC (Subtract Memory from Accumulator with Borrow)
+            /*
+            This instruction subtracts the value of memory and borrow from the value of the accumulator, using two's complement arithmetic, and stores the result in the accumulator. 
+            Borrow is defined as the carry flag complemented; therefore, a resultant carry flag indicates that a borrow has not occurred.
+            This instruction affects the accumulator. The carry flag is set if the result is greater than or equal to 0. The carry flag is reset when the result is less than 0, indicating a borrow. 
+            The over­flow flag is set when the result exceeds +127 or -127, otherwise it is reset. The negative flag is set if the result in the accumulator has bit 7 on, otherwise it is reset. 
+            The Z flag is set if the result in the accumulator is 0, otherwise it is reset.
+            Note on the MOS 6502:
+            In decimal mode, the N, V and Z flags are not consistent with the decimal result.*/
             // $E9: #Immediate
             // $ED: Absolute
             // $FD: Absolute,X
@@ -384,16 +393,22 @@ void Emulator::TickCPU()
             // $F5: Zero Page,X
             // $E1: (Zero Page,X)
             // $F1: (Zero Page),Y
+            //TODO: Decimal Mode
             case 0b111:
                 data = ReadByte(address);
-                result = A - data - ~C;
-                V = ((A ^ data) & (A ^ result) & 0x80); // wtf
-                C = !(result & 0xFF00);
-                A = (result & 0xFF);
-                SET_NZ(A);
+                if( (((A + (0xff - data) + C) ^ A) & 0x80) && !((A ^ (0xff - data)) & 0x80) )
+                {
+                    V = 1;
+                } else 
+                {
+                    V = 0;
+                }
+                small_result = (((A + (0xff - data) + C) & 0x100) >> 8); 
+                A = ((A + (0xff - data) + C) & 0xff); 
+		        C = small_result;
+		        SET_NZ(A); 
                 break;
             }
-
         }
         else if (opcode.group == 0b10) {
 
