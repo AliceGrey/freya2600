@@ -71,7 +71,7 @@ public:
     byte RAM[0x80];
 
     // Port A I/O Data
-    byte SWCHA;
+    JoystickRegister SWCHA;
 
     // Port A I/O Direction
     byte SWACNT;
@@ -79,7 +79,6 @@ public:
     // Port B I/O Data, hardwired to Console Switches
     ConsoleSwitches SWCHB;
 
-    // TODO: How hard is "hardwired"
     // Port B I/O Direction
     byte SWBCNT;
 

@@ -130,8 +130,12 @@ void Emulator::Reset()
 
     SWCHB._raw = 0x00;
     SWCHB.ColorEnabled = 1;
-    SWCHB.ResetUp = 1;
-    SWCHB.SelectUp = 1;
+    SWCHB.Reset = 1;
+    SWCHB.Select = 1;
+    SWBCNT = 0x00;
+
+    SWCHA._raw = 0x7F;
+    SWACNT = 0x00;
 
     WSYNC = false;
 
@@ -216,8 +220,9 @@ void Emulator::Run()
 
         // TODO: Determine when a frame has been drawn
         bool drawing = true;
-        while (drawing) {
-        //for (int i = 0; i < 1000; ++i) {
+        int i = 0;
+        //while (drawing) {
+        for (int i = 0; i < 800; ++i) {
 
             uint64_t beforeInstCycles = CPUCycleCount;
             

@@ -617,14 +617,14 @@ void Emulator::TickCPU()
                 SET_NZ(data);
                 break;
 
-            // $6C: JMP (Jump to Address Indirect)
+            // $4C: JMP (Jump to Address)
             case 0b010:
-                PC = ReadWord(address);
+                PC = address;
                 break;
 
-            // $4C: JMP (Jump to Address)
+            // $6C: JMP (Jump to Address Indirect)
             case 0b011:
-                PC = address;
+                PC = ReadWord(address);
                 break;
 
             // STY (Store Index Register Y into Memory)

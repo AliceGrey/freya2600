@@ -76,18 +76,18 @@ uint8_t Emulator::ReadByte(word address, bool tick /*= true*/)
     // PIA (AKA RIOT) (I/O, Timer)
     if (address >= 0x280 && address <= 0x297) {
         switch (address) {
-            //IO
-            //TODO
-            // constexpr uint16_t ADDR_SWCHA   = 0x280; // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.)
-            // constexpr uint16_t ADDR_SWACNT  = 0x281; // Port A data direction register, 0= input, 1=output
+            //I/O
+            case ADDR_SWCHA: // Port A; input or output (read or write) Used for controllers (joystick, paddles, etc.)
+                return SWCHA._raw;
+            case ADDR_SWACNT: // Port A data direction register, 0= input, 1=output
+                return SWACNT;
             case ADDR_SWCHB: // Port B; console switches (read only)
                 return SWCHB._raw;
-            // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input)
-
+            case ADDR_SWBCNT: // Port B data direction register (hardwired as input) 
+                return SWBCNT;
             case ADDR_INTIM:  // Timer output (read only)
                 TIMINT.Timer = 0;
                 return INTIM;
-
             case ADDR_TIMINT: // Timer Interupt Flag
                 TIMINT.EdgeDetect = 0;
                 return TIMINT._raw;
@@ -236,7 +236,7 @@ void Emulator::WriteByte(word address, byte data)
                 SWBCNT = data;
                 break;
             case ADDR_SWCHA:
-                SWCHA ^= ~(data & SWACNT);
+                SWCHA._raw ^= ~(data & SWACNT);
                 break;
             case ADDR_SWACNT:
                 SWACNT = data;
