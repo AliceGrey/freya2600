@@ -113,9 +113,12 @@ public:
 
     ColorPicker COLUBK;
 
-    byte GRP0;
+    byte GRP0; // Player 0 Graphics
 
-    byte GRP1;
+    byte GRP1; // Player 1 Graphics
+
+    unsigned SpriteCounterP0 = 0;
+    unsigned SpriteCounterP1 = 0;
 
     PlayerFieldControl CTRLPF;
 

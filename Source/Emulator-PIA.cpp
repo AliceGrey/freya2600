@@ -19,6 +19,9 @@ operations and keep them synchronized with the hardware (TIA chip).
 */
 void Emulator::TickPIA()
 {
+    // if (WSYNC) {
+    //     return;
+    // }
 
     /*
     The timer is set by writing a value or count (from 1 to 255) to the address of
@@ -43,7 +46,7 @@ void Emulator::TickPIA()
 
 
     ++TimerCounter;
-    if (TimerCounter == TimerInterval) {
+    if (TimerCounter >= TimerInterval) {
         TimerCounter = 0;
 
         if (INTIM == 0) {
@@ -53,5 +56,4 @@ void Emulator::TickPIA()
 
         --INTIM;
     }
-    
 }

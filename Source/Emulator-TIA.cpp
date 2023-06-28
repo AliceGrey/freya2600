@@ -74,7 +74,7 @@ constexpr uint8_t NTSC[128][3] = {
     { 148, 136, 224 },
     { 168, 160, 236 },
     { 188, 180, 252 },
-    
+
     { 0, 0, 136} ,
     { 28, 32, 156 },
     { 56, 64, 176 },
@@ -126,7 +126,7 @@ constexpr uint8_t NTSC[128][3] = {
     { 108, 152, 80 },
     { 132, 180, 104 },
     { 156, 204, 192 },
-    { 180, 228, 144 }, 
+    { 180, 228, 144 },
     { 200, 252, 164 },
 
     { 44, 48, 0 },
@@ -170,20 +170,20 @@ void Emulator::TickTIA()
     // if (MemoryColumn > HBLANK_CUTOFF && MemoryLine > VBLANK_CUTOFF && MemoryLine < OVERSCAN_CUTOFF) {
     //     DrawState = VISIBLE;
     // }
-    
+
     // switch(DrawState){
     //     case IN_VBLANK:
     //         //TODO
     //         break;
-        
+
     //     case IN_HBLANK:
     //         //TODO
     //         break;
-        
+
     //     case IN_OVERSCAN:
     //         //TODO
     //         break;
-        
+
     //     case VISIBLE:
     if (MemoryColumn >= HBLANK_CUTOFF && MemoryLine >= VBLANK_CUTOFF && MemoryLine < OVERSCAN_CUTOFF) {
         unsigned x = MemoryColumn - HBLANK_CUTOFF;
@@ -205,12 +205,18 @@ void Emulator::TickTIA()
             }
         }
         else {
-            auto& background = NTSC[COLUBK.Index];
-            auto& playerField = NTSC[COLUPF.Index];
+            auto draw = [&](const uint8_t color[3]) {
+                ScreenBuffer[offset + 0] = color[0]; // R
+                ScreenBuffer[offset + 1] = color[1]; // G
+                ScreenBuffer[offset + 2] = color[2]; // B
+            };
 
-            ScreenBuffer[offset + 0] = background[0]; // R
-            ScreenBuffer[offset + 1] = background[1]; // G
-            ScreenBuffer[offset + 2] = background[2]; // B
+            auto& colorBackground = NTSC[COLUBK.Index];
+            auto& colorField = NTSC[COLUPF.Index];
+            auto& colorP0 = NTSC[COLUP0.Index];
+            auto& colorP1 = NTSC[COLUP1.Index];
+
+            draw(colorBackground);
 
             unsigned dot = x / 4;
 
@@ -239,9 +245,33 @@ void Emulator::TickTIA()
             }
 
             if (PF[byte] & (1 << bits[dot])) {
-                ScreenBuffer[offset + 0] = playerField[0];
-                ScreenBuffer[offset + 1] = playerField[1];
-                ScreenBuffer[offset + 2] = playerField[2];   
+                if (CTRLPF.ScoreColorMode) {
+                    if (x > (SCREEN_WIDTH / 2)) {
+                        draw(colorP1);
+                    }
+                    else {
+                        draw(colorP0);
+                    }
+                }
+                else {
+                    draw(colorField);
+                }
+            }
+
+            if (SpriteCounterP0 > 0) {
+                --SpriteCounterP0;
+
+                if (GRP0 & (1 << SpriteCounterP0)) {
+                    draw(colorP0);
+                }
+            }
+
+            if (SpriteCounterP1 > 0) {
+                --SpriteCounterP1;
+
+                if (GRP1 & (1 << SpriteCounterP1)) {
+                    draw(colorP1);
+                }
             }
 
         }
@@ -336,7 +366,7 @@ void Emulator::TickTIA()
         // break;
         // }
     }
-    
+
     ++MemoryColumn;
     // Once we hit the end of the line
     if (MemoryColumn == 228) {

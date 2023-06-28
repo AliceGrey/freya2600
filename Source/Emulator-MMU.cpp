@@ -214,8 +214,10 @@ void Emulator::WriteByte(word address, byte data)
                 PF[2] = data;
                 break;
             case ADDR_RESP0:  // Write: Reset player 0 (strobe)
+                SpriteCounterP0 = 8;
                 break;
             case ADDR_RESP1:  // Write: Reset player 1 (strobe)
+                SpriteCounterP1 = 8;
                 break;
             case ADDR_RESM0:  // Write: Reset missle 0 (strobe)
                 break;
@@ -228,18 +230,6 @@ void Emulator::WriteByte(word address, byte data)
             case ADDR_HMCLR:  // Write: Clear horizontal motion registers (strobe)
                 break;
             case ADDR_CXCLR:  // Write: Clear collision latches (strobe)
-                break;
-            case ADDR_SWCHB:
-                SWCHB._raw ^= ~(data & SWBCNT);
-                break;
-            case ADDR_SWBCNT:
-                SWBCNT = data;
-                break;
-            case ADDR_SWCHA:
-                SWCHA._raw ^= ~(data & SWACNT);
-                break;
-            case ADDR_SWACNT:
-                SWACNT = data;
                 break;
 
             default:
@@ -261,8 +251,8 @@ void Emulator::WriteByte(word address, byte data)
     if (address >= 0x280 && address <= 0x297) {
 
         if (address >= ADDR_TIM1T && address <= ADDR_T1024T) {
-            TimerCounter = 0;
             TimerInterval = TIMER_INTERVALS[address - ADDR_TIM1T];
+            TimerCounter = TimerInterval - 2; // ?
             INTIM = data;
             TIMINT.Timer = 0;
             return;
@@ -276,6 +266,23 @@ void Emulator::WriteByte(word address, byte data)
             // constexpr uint16_t ADDR_SWCHB   = 0x282; // Port B; console switches (read only)
             // constexpr uint16_t ADDR_SWBCNT  = 0x283; // Port B data direction register (hardwired as input)
 
+            case ADDR_SWCHB:
+                SWCHB._raw &= ~SWBCNT;
+                SWCHB._raw |= (data & SWBCNT);
+                // SWCHB._raw = data;
+                // SWCHB.ColorEnabled = 1;
+                // SWCHB._raw = (data | ~SWBCNT) & (SWCHB._raw | SWBCNT);
+                break;
+            case ADDR_SWBCNT:
+                SWBCNT = data;
+                break;
+            case ADDR_SWCHA:
+                SWCHA._raw &= ~SWACNT;
+                SWCHA._raw |= (data & SWACNT);
+                break;
+            case ADDR_SWACNT:
+                SWACNT = data;
+                break;
             default:
                  printf("RIOT I/O WRITE 0x%04hX \n", address);
                  break;

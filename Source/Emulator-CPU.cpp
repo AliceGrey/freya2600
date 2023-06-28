@@ -12,7 +12,12 @@ void Emulator::TickCPU()
     }
 
     LastInstructionAddress = PC;
-    printRegisters();
+
+    static unsigned index = 0;
+    // if (index > 894) {
+        // printRegisters();
+    // }
+    ++index;
 
     OperationCode opcode = { ._raw = NextByte() };
 
@@ -605,10 +610,12 @@ void Emulator::TickCPU()
             // BIT (Test Bits in Memory with Accumulator)
             // $2C: Absolute
             // $24: Zero Page
-            case 0b001: 
-                data = ReadByte(address) & A;
-                V = (data & 0x40);
-                SET_NZ(data);
+            case 0b001:
+                data = ReadByte(address);
+                N = ((data & 0x80) > 0);
+                V = ((data & 0x40) > 0);
+                data &= A;
+                Z = (data == 0);
                 break;
 
             // $4C: JMP (Jump to Address)
@@ -828,7 +835,7 @@ static const Instruction INSTRUCTIONS[] = {
     { 2, "sta  {0:02x},x" },
     { 2, "stx  {0:02x},y" },
     { 1, "e$97" },
-    { 1, "tax" },
+    { 1, "tya" },
     { 3, "sta  {1:02x}{0:02x},y" },
     { 1, "txs" },
     { 1, "e$9b" },
@@ -990,8 +997,8 @@ void Emulator::printRegisters()
 	}
 
 	fprintf(tLog,
-        "\n(%5d %4d %3d %3d)  (%3d %3d %3d %3d %3d)  <%4x>  ",
-		(int)FrameCount,
+        "(%05x %4d %3d %3d)  (%3d %3d %3d %3d %3d)  <%4x>  ",
+		(int)INTIM,
         MemoryLine + 1,
         (int)(CPUCycleCount - LastWSYNC),
         (int)TIACycleCount,
@@ -1027,6 +1034,6 @@ void Emulator::printRegisters()
         fprintf(tLog, "%02x %02x %02x ", d0, d1, d2);
     }
 
-    fprintf(tLog, "%s", Disassemble(LastInstructionAddress));
+    fprintf(tLog, "%s\n", Disassemble(LastInstructionAddress));
     fflush(tLog);
 }

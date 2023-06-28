@@ -85,8 +85,8 @@ void Emulator::Reset()
     VSYNC._raw = 0x00;
     VBLANK._raw = 0x00;
 
-    NUSIZ0._raw = 0;
-    NUSIZ1._raw = 0;
+    NUSIZ0._raw = 0x00;
+    NUSIZ1._raw = 0x00;
 
     COLUP0._raw = 0x00;
     COLUP1._raw = 0x00;
@@ -221,8 +221,8 @@ void Emulator::Run()
         // TODO: Determine when a frame has been drawn
         bool drawing = true;
         int i = 0;
-        //while (drawing) {
-        for (int i = 0; i < 800; ++i) {
+        while (drawing) {
+        //for (int i = 0; i < 1904; ++i) {
 
             uint64_t beforeInstCycles = CPUCycleCount;
             
@@ -230,15 +230,15 @@ void Emulator::Run()
 
             uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
 
-            printf("Instruction took %lu cycles\n", deltaInstCycles);
+            //printf("Instruction took %lu cycles\n", deltaInstCycles);
 
             for (uint64_t i = 0; i < deltaInstCycles; ++i) {
                 TickPIA();
             }
 
-            //while (WSYNC) {
-                //TickTIA();
-            //}
+            // while (WSYNC) {
+            //     TickTIA();
+            // }
 
             for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
                 unsigned lastMemoryLine = MemoryLine;
@@ -256,7 +256,7 @@ void Emulator::Run()
 
         //printf("Frame took %lu cycles\n", deltaFrameCycles);
 
-        //exit(0);
+        // exit(0);
         
         int pitch;
         uint8_t * pixels = nullptr;
@@ -327,10 +327,9 @@ void Emulator::printRAMGrid(const uint8_t* RAM) {
 
 void Emulator::printTraceLogHeaders(const char* filename) {
     tLog = fopen("log.txt", "w");
-    fprintf(tLog,"Loaded ROM: %s\n\n", filename);
-		fprintf(tLog,
-				"(Frame Line CPU TIA)  "
-				"( P0  P1  M0  M1  BL)  collsn   "
-				"flags   A  X  Y SP   Adr  Code\n");
-
+    // fprintf(tLog,"Loaded ROM: %s\n\n", filename);
+	// 	fprintf(tLog,
+	// 			"(Frame Line CPU TIA)  "
+	// 			"( P0  P1  M0  M1  BL)  collsn   "
+	// 			"flags   A  X  Y SP   Adr  Code\n");
 }
