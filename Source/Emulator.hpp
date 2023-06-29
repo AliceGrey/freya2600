@@ -9,6 +9,8 @@
 
 #include <SDL.h>
 
+#include "Debugger.hpp"
+
 class Emulator
 {
 public:
@@ -180,8 +182,12 @@ public:
     int ROMBank; // currently selected bank of ROM
 
     byte EXTRAM[0x100];
+    
+    bool IsRunning;
 
     SDL_Window * Window = nullptr;
+
+    unsigned WindowID;
 
     SDL_Point WindowSize = {
         DISPLAY_WIDTH * 2,
@@ -204,11 +210,15 @@ public:
 
     uintmax_t FrameCount = 0;
 
+    Debugger * Debug = nullptr;
+
     FILE* tLog;
 
     Emulator();
 
     ~Emulator();
+
+    void StartDebugger();
 
     void Reset();
 

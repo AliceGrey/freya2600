@@ -39,3 +39,5 @@
 *.bin
 *.a26
 *.pal
+
+Source/Font.hpp

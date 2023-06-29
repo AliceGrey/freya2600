@@ -14,8 +14,10 @@ Emulator::Emulator()
         SDL_WINDOWPOS_CENTERED,
         WindowSize.x,
         WindowSize.y,
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN
+        SDL_WINDOW_RESIZABLE
     );
+
+    WindowID = SDL_GetWindowID(Window);
 
     Renderer = SDL_CreateRenderer(Window, -1, SDL_RENDERER_ACCELERATED);
 
@@ -53,6 +55,11 @@ Emulator::Emulator()
 
 Emulator::~Emulator()
 {
+    if (Debug) {
+        delete Debug;
+        Debug = nullptr;
+    }
+
     SDL_DestroyTexture(ScreenTexture);
     ScreenTexture = nullptr;
 
@@ -63,6 +70,11 @@ Emulator::~Emulator()
     Window = nullptr;
 
     SDL_Quit();
+}
+
+void Emulator::StartDebugger()
+{
+    Debug = new Debugger(this);
 }
 
 void Emulator::Reset()
@@ -197,20 +209,28 @@ void Emulator::LoadCartridge(const char * filename)
 void Emulator::Run()
 {
     Reset();
-
-    SDL_ShowWindow(Window);
-    bool running = true;
-    while (running) {
+    
+    IsRunning = true;
+    while (IsRunning) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                running = false;
+                IsRunning = false;
             }
 
             if (event.type == SDL_WINDOWEVENT) {
-                if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                    WindowSize.x = event.window.data1;
-                    WindowSize.y = event.window.data2;
+                if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                    IsRunning = false;
+                }
+
+                if (event.window.windowID == WindowID) {
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        WindowSize.x = event.window.data1;
+                        WindowSize.y = event.window.data2;
+                    }
+                }
+                else if (Debug) {
+                    Debug->HandleEvent(&event);
                 }
             }
             // TODO: Input
@@ -220,9 +240,8 @@ void Emulator::Run()
 
         // TODO: Determine when a frame has been drawn
         bool drawing = true;
-        int i = 0;
         while (drawing) {
-        //for (int i = 0; i < 1904; ++i) {
+        // for (int i = 0; i < 710; ++i) {
 
             uint64_t beforeInstCycles = CPUCycleCount;
             
@@ -267,7 +286,6 @@ void Emulator::Run()
         }
         SDL_UnlockTexture(ScreenTexture);
 
-
         SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
         SDL_RenderClear(Renderer);
 
@@ -291,6 +309,10 @@ void Emulator::Run()
         SDL_RenderCopy(Renderer, ScreenTexture, nullptr, &destination);
 
         SDL_RenderPresent(Renderer);
+
+        if (Debug) {
+            Debug->Render();
+        }
     }
     
 }
