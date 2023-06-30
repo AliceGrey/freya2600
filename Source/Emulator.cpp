@@ -233,6 +233,11 @@ void Emulator::Run()
                     Debug->HandleEvent(&event);
                 }
             }
+            else {
+                if (Debug) {
+                    Debug->HandleEvent(&event);
+                }
+            }
             // TODO: Input
         }
 

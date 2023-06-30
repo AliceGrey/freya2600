@@ -21,6 +21,10 @@ public:
 
     SDL_Texture * FontTexture;
 
+    SDL_Cursor * DefaultMouseCursor;
+
+    SDL_Cursor * HandMouseCursor;
+
     Debugger(Emulator * emu);
 
     ~Debugger();
@@ -31,9 +35,25 @@ public:
 
     SDL_Point Cursor;
 
-    void MoveCursor(int x, int y);
+    SDL_Point Mouse;
+
+    bool MouseReleased = false;
+
+    inline void MoveCursor(int dX, int dY) {
+        Cursor.x += dX;
+        Cursor.y += dY;
+    }
+
+    inline void SetCursor(int x, int y) {
+        Cursor.x = x;
+        Cursor.y = y;
+    }
+
+    SDL_Point MeasureText(const std::string& text);
 
     void DrawText(const std::string& text);
+
+    bool DrawButton(const std::string& label);
 
     void DrawRegisters();
 

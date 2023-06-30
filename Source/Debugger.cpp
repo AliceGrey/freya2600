@@ -31,34 +31,60 @@ Debugger::Debugger(Emulator * emu)
     FontTexture = SDL_CreateTextureFromSurface(Renderer, fontSurface);
 
     SDL_FreeSurface(fontSurface);
+
+    DefaultMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    HandMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 }
 
 Debugger::~Debugger()
 {
+    SDL_FreeCursor(HandMouseCursor);
+    SDL_FreeCursor(DefaultMouseCursor);
+
     SDL_DestroyTexture(FontTexture);
     FontTexture = nullptr;
 }
 
 void Debugger::HandleEvent(SDL_Event * event)
 {
-
+    switch (event->type)
+    {
+    case SDL_MOUSEMOTION:
+        Mouse.x = event->motion.x;
+        Mouse.y = event->motion.y;
+        break;
+    case SDL_MOUSEBUTTONUP:
+        if (event->button.button == SDL_BUTTON_LEFT) {
+            MouseReleased = true;
+        }
+        break;
+    }
 }
 
 void Debugger::Render()
 {
+    SDL_SetCursor(DefaultMouseCursor);
+
     SDL_SetRenderDrawColor(Renderer, 255, 255, 255, 255);
     SDL_RenderClear(Renderer);
 
-    MoveCursor(10, 10);
+    SetCursor(10, 10);
     DrawRegisters();
 
+    SetCursor(100, 100);
+    if (DrawButton("Suck it")) {
+        printf("Suck it\n");
+    }
+
     SDL_RenderPresent(Renderer);
+
+    MouseReleased = false;
 }
 
-void Debugger::MoveCursor(int x, int y)
+SDL_Point Debugger::MeasureText(const std::string& text)
 {
-    Cursor.x = x;
-    Cursor.y = y;
+    // TODO: Handle multi-line
+    return { (int)(text.size() * FONT_GLYPH_WIDTH), FONT_LINE_HEIGHT };
 }
 
 void Debugger::DrawText(const std::string& text)
@@ -100,6 +126,44 @@ void Debugger::DrawText(const std::string& text)
             Cursor.x += FONT_GLYPH_WIDTH;
         }
     }
+}
+
+#define PADDING 5
+
+bool Debugger::DrawButton(const std::string& label)
+{
+    SDL_Point topLeft = Cursor;
+
+    SDL_Point textSize = MeasureText(label);
+
+    SDL_Rect bounds = {
+        .x = topLeft.x,
+        .y = topLeft.y,
+        .w = textSize.x + PADDING + PADDING,
+        .h = textSize.y + PADDING + PADDING,
+    };
+
+    bool hover = SDL_PointInRect(&Mouse, &bounds);
+
+    if (hover) {
+        SDL_SetRenderDrawColor(Renderer, 128, 128, 128, 255);
+        SDL_SetCursor(HandMouseCursor);
+    }
+    else {
+        SDL_SetRenderDrawColor(Renderer, 192, 192, 192, 255);
+    }
+
+    SDL_RenderFillRect(Renderer, &bounds);
+
+    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
+    SDL_RenderDrawRect(Renderer, &bounds);
+
+    MoveCursor(PADDING, PADDING);
+    DrawText(label);
+
+    SetCursor(Cursor.x + PADDING + FONT_GLYPH_WIDTH, topLeft.y);
+
+    return (hover && MouseReleased);
 }
 
 void Debugger::DrawRegisters()
