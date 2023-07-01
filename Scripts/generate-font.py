@@ -44,7 +44,8 @@ with Image(width=len(glyphs) * font_size, height=font_size, background=Color('tr
 
         metrics = drawing.get_font_metrics(image, glyphs)
         font_line_height = int(metrics.text_height)
-        image.resize(int(metrics.text_width), int(metrics.text_height))
+        
+        image.resize(len(glyphs) * font_glyph_width, font_line_height)
 
         x = 0
         for glyph in glyphs:

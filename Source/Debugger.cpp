@@ -99,13 +99,14 @@ void Debugger::Render()
     // tab = DrawTabs({ "PIA", "TIA", "RAM" }, tab);
     // switch (tab) {
     // case 0:
-    //     DrawPIA();
+        DrawPIA();
     //     break;
     // case 1:
-    //     DrawTIA();
+        DrawTIA();
     //     break;
     // case 2:
-    //     DrawRAM();
+        SetCursor(200, 50);
+        DrawRAM();
     //     break;
     // }
 
@@ -403,6 +404,23 @@ void Debugger::DrawRAM()
 
     DrawText("0x 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F\n");
 
+    if (Emu->SP >= 0x80) {
+        SDL_Rect stack = {
+            .x = Cursor.x + (3 * FONT_GLYPH_WIDTH) - 2,
+            .y = Cursor.y + 1,
+            .w = (2 * FONT_GLYPH_WIDTH) + 4,
+            .h = FONT_LINE_HEIGHT - 1,
+        };
+
+        int row = (Emu->SP / 0x10) - 8;
+        int col = (Emu->SP % 0x10);
+        stack.x += col * 3 * FONT_GLYPH_WIDTH;
+        stack.y += row * FONT_LINE_HEIGHT;
+
+        SDL_SetRenderDrawColor(Renderer, 0x00, 0x00, 0x00, 0xFF);
+        SDL_RenderDrawRect(Renderer, &stack);
+    }
+
     unsigned row = 0x80;
     for (int off = 0; off < sizeof(Emu->RAM); off += 16) {
         DrawText(fmt::format(
@@ -496,7 +514,7 @@ void Debugger::DrawTIA()
     DrawText(fmt::format(
         "SWCHA  %{:08b}\n"
         "SWACNT %{:08b}\n"
-        "SWCHA  %{:08b}\n"
+        "SWCHB  %{:08b}\n"
         "SWBCNT %{:08b}\n",
         Emu->SWCHA._raw,
         Emu->SWACNT,
