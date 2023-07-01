@@ -46,8 +46,11 @@ with Image(width=len(glyphs) * font_size, height=font_size, background=Color('tr
         font_line_height = int(metrics.text_height)
         image.resize(int(metrics.text_width), int(metrics.text_height))
 
-        # TODO: Remove the need for the + 2
-        drawing.text(0, int(metrics.y2) + 2, glyphs)
+        x = 0
+        for glyph in glyphs:
+            # TODO: Remove the need for the + 2
+            drawing.text(x, int(metrics.y2) + 2, glyph)
+            x += font_glyph_width
 
         drawing.draw(image)
 

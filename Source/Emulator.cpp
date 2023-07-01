@@ -180,7 +180,7 @@ void Emulator::LoadCartridge(const char * filename)
 
     // Determine the ROM file size
     fseek(file, 0, SEEK_END);
-    unsigned long fileSize = ftell(file);
+    long fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
 
     // Calculate the number of ROM banks
@@ -191,7 +191,7 @@ void Emulator::LoadCartridge(const char * filename)
     }
 
     // Read the ROM file into memory
-    fileSize = std::min(fileSize, sizeof(ROM));
+    fileSize = std::min(fileSize, (long)sizeof(ROM));
     fread(&ROM[0][0x0000], 1, fileSize, file);
 
     // Deal with undersized ROMs

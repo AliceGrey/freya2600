@@ -40,5 +40,6 @@ target_link_libraries(
     Freya2600
     PRIVATE
         SDL2::SDL2
+        SDL2::SDL2main
         fmt::fmt
 )

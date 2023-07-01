@@ -182,7 +182,7 @@ public:
 
     byte ROM[MAX_BANKS][ROM_BANK_SIZE];
 
-    int ROMBank; // currently selected bank of ROM
+    int ROMBank = 0; // currently selected bank of ROM
 
     byte EXTRAM[0x100];
     
