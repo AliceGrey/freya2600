@@ -63,11 +63,12 @@ void Debugger::HandleEvent(SDL_Event * event)
 
 void Debugger::Render()
 {
+    // Cursor as in the icon your mouse uses
     SDL_SetCursor(DefaultMouseCursor);
 
     SDL_SetRenderDrawColor(Renderer, 255, 255, 255, 255);
     SDL_RenderClear(Renderer);
-
+    //Cursor as in where to draw
     SetCursor(10, 10);
     if (DrawButton("Reset")) {
         Emu->Reset();
@@ -507,8 +508,13 @@ void Debugger::DrawTIA()
 
     DrawHeading("Switches");
 
-    DrawCheckbox("Select\n", !Emu->SWCHB.Select);
-    DrawCheckbox("Reset\n", !Emu->SWCHB.Reset);
+    if (DrawCheckbox("Select\n", !Emu->SWCHB.Select)) {
+        Emu->SWCHB.Select = !Emu->SWCHB.Select;
+    }
+    
+    if (DrawCheckbox("Reset\n", !Emu->SWCHB.Reset)) {
+        Emu->SWCHB.Reset = !Emu->SWCHB.Reset;
+    }
 
     if (DrawCheckbox("P0 DIff\n", Emu->SWCHB.P0DIFF)) {
         Emu->SWCHB.P0DIFF = !Emu->SWCHB.P0DIFF;
