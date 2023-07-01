@@ -49,7 +49,10 @@ public:
             // Decimal
             byte D : 1;
             
-            byte   : 2;
+            // B
+            byte B : 1;
+
+            byte   : 1;
 
             // Overflow
             byte V : 1;
@@ -183,7 +186,7 @@ public:
 
     byte EXTRAM[0x100];
     
-    bool IsRunning;
+    bool IsPlaying;
 
     SDL_Window * Window = nullptr;
 
@@ -226,6 +229,12 @@ public:
 
     void Run();
 
+    void DoStep();
+
+    void DoLine();
+
+    void DoFrame();
+
     void TickCPU();
 
     void TickTIA();
@@ -237,6 +246,8 @@ public:
     void WriteByte(word address, byte data);
 
     const char * Disassemble(word address);
+
+    SDL_Color GetColor(uint8_t index);
 
     void printRAMGrid(const uint8_t* RAM);
 

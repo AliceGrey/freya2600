@@ -53,9 +53,34 @@ public:
 
     void DrawText(const std::string& text);
 
-    bool DrawButton(const std::string& label);
+    void DrawHeading(const std::string& text);
+
+    bool DrawButton(const std::string& label, bool enabled = true);
+
+    bool DrawCheckbox(const std::string& label, bool checked);
+
+    struct TabBar
+    {
+        int Index;
+
+        SDL_Point TopLeft;
+
+        SDL_Point Size;
+    };
+
+    TabBar BeginTabBar(int width, int height);
+
+    void EndTabBar(TabBar& tabBar);
+
+    bool DrawTab(TabBar& tabBar, const std::string& label, int selected);
 
     void DrawRegisters();
+
+    void DrawRAM();
+
+    void DrawPIA();
+
+    void DrawTIA();
 
 }; // class Debugger
 

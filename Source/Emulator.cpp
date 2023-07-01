@@ -10,8 +10,8 @@ Emulator::Emulator()
 
     Window = SDL_CreateWindow(
         "Freya2600",
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
+        100,
+        100,
         WindowSize.x,
         WindowSize.y,
         SDL_WINDOW_RESIZABLE
@@ -29,28 +29,6 @@ Emulator::Emulator()
         SCREEN_WIDTH,
         SCREEN_HEIGHT
     );
-
-    // Official Test Pattern ;) 
-    for (unsigned y = 0; y < SCREEN_HEIGHT; ++y) {
-        for (unsigned x = 0; x < SCREEN_WIDTH; ++x) {
-            unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
-            if (y < 38 || y > 154) {
-                ScreenBuffer[offset + 0] = 91; // R
-                ScreenBuffer[offset + 1] = 206; // G
-                ScreenBuffer[offset + 2] = 250; // B
-            }
-            else if (y < 76 || y > 116) {
-                ScreenBuffer[offset + 0] = 245; // R
-                ScreenBuffer[offset + 1] = 169; // G
-                ScreenBuffer[offset + 2] = 184; // B
-            }
-            else {
-                ScreenBuffer[offset + 0] = 255; // R
-                ScreenBuffer[offset + 1] = 255; // G
-                ScreenBuffer[offset + 2] = 255; // B
-            }
-        }
-    }
 }
 
 Emulator::~Emulator()
@@ -146,7 +124,7 @@ void Emulator::Reset()
     SWCHB.Select = 1;
     SWBCNT = 0x00;
 
-    SWCHA._raw = 0x7F;
+    SWCHA._raw = 0xFF;
     SWACNT = 0x00;
 
     WSYNC = false;
@@ -160,6 +138,28 @@ void Emulator::Reset()
 
     CPUCycleCount = 0;
     TIACycleCount = 0;
+
+    // Official Test Pattern ;) 
+    for (unsigned y = 0; y < SCREEN_HEIGHT; ++y) {
+        for (unsigned x = 0; x < SCREEN_WIDTH; ++x) {
+            unsigned offset = ((y * SCREEN_WIDTH) + x) * 3; // RGB
+            if (y < 38 || y > 154) {
+                ScreenBuffer[offset + 0] = 91; // R
+                ScreenBuffer[offset + 1] = 206; // G
+                ScreenBuffer[offset + 2] = 250; // B
+            }
+            else if (y < 76 || y > 116) {
+                ScreenBuffer[offset + 0] = 245; // R
+                ScreenBuffer[offset + 1] = 169; // G
+                ScreenBuffer[offset + 2] = 184; // B
+            }
+            else {
+                ScreenBuffer[offset + 0] = 255; // R
+                ScreenBuffer[offset + 1] = 255; // G
+                ScreenBuffer[offset + 2] = 255; // B
+            }
+        }
+    }
 }
 
 void Emulator::LoadCartridge(const char * filename)
@@ -209,18 +209,23 @@ void Emulator::LoadCartridge(const char * filename)
 void Emulator::Run()
 {
     Reset();
+
+    IsPlaying = true;
+    if (Debug) {
+        IsPlaying = false;
+    }
     
-    IsRunning = true;
-    while (IsRunning) {
+    bool running = true;
+    while (running) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                IsRunning = false;
+                running = false;
             }
 
             if (event.type == SDL_WINDOWEVENT) {
                 if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
-                    IsRunning = false;
+                    running = false;
                 }
 
                 if (event.window.windowID == WindowID) {
@@ -241,46 +246,9 @@ void Emulator::Run()
             // TODO: Input
         }
 
-        uint64_t beforeFrameCycles = CPUCycleCount;
-
-        // TODO: Determine when a frame has been drawn
-        bool drawing = true;
-        while (drawing) {
-        // for (int i = 0; i < 710; ++i) {
-
-            uint64_t beforeInstCycles = CPUCycleCount;
-            
-            TickCPU();
-
-            uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
-
-            //printf("Instruction took %lu cycles\n", deltaInstCycles);
-
-            for (uint64_t i = 0; i < deltaInstCycles; ++i) {
-                TickPIA();
-            }
-
-            // while (WSYNC) {
-            //     TickTIA();
-            // }
-
-            for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
-                unsigned lastMemoryLine = MemoryLine;
-
-                TickTIA();
-
-                if (MemoryLine == 0 && MemoryLine != lastMemoryLine) {
-                    drawing = false;
-                    break;
-                }
-            }
+        if (IsPlaying) {
+            DoFrame();
         }
-
-        uint64_t deltaFrameCycles = CPUCycleCount - beforeFrameCycles;
-
-        //printf("Frame took %lu cycles\n", deltaFrameCycles);
-
-        // exit(0);
         
         int pitch;
         uint8_t * pixels = nullptr;
@@ -320,6 +288,80 @@ void Emulator::Run()
         }
     }
     
+}
+
+void Emulator::DoStep()
+{
+    do {
+        uint64_t beforeInstCycles = CPUCycleCount;
+        
+        TickCPU();
+
+        uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
+
+        for (uint64_t i = 0; i < deltaInstCycles; ++i) {
+            TickPIA();
+        }
+
+        for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
+            TickTIA();
+        }   
+    }
+    while (WSYNC);
+}
+
+void Emulator::DoLine()
+{
+    bool drawing = true;
+    while (drawing) {
+
+        uint64_t beforeInstCycles = CPUCycleCount;
+        
+        TickCPU();
+
+        uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
+
+        for (uint64_t i = 0; i < deltaInstCycles; ++i) {
+            TickPIA();
+        }
+
+        for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
+            unsigned lastMemoryLine = MemoryLine;
+
+            TickTIA();
+
+            if (MemoryLine != lastMemoryLine) {
+                drawing = false;
+            }
+        }
+    }
+}
+
+void Emulator::DoFrame()
+{
+    bool drawing = true;
+    while (drawing) {
+
+        uint64_t beforeInstCycles = CPUCycleCount;
+        
+        TickCPU();
+
+        uint64_t deltaInstCycles = CPUCycleCount - beforeInstCycles;
+
+        for (uint64_t i = 0; i < deltaInstCycles; ++i) {
+            TickPIA();
+        }
+
+        for (uint64_t i = 0; i < deltaInstCycles * 3; ++i) {
+            unsigned lastMemoryLine = MemoryLine;
+
+            TickTIA();
+
+            if (MemoryLine == 0 && MemoryLine != lastMemoryLine) {
+                drawing = false;
+            }
+        }
+    }
 }
 
 void Emulator::printRAMGrid(const uint8_t* RAM) {

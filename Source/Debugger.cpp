@@ -15,9 +15,9 @@ Debugger::Debugger(Emulator * emu)
     Window = SDL_CreateWindow(
         "Freya2600 - Debugger",
         mainWindow.x + mainWindow.w,
-        SDL_WINDOWPOS_UNDEFINED,
-        640,
-        480,
+        100,
+        1024,
+        768,
         SDL_WINDOW_RESIZABLE
     );
 
@@ -69,12 +69,44 @@ void Debugger::Render()
     SDL_RenderClear(Renderer);
 
     SetCursor(10, 10);
+    if (DrawButton("Reset")) {
+        Emu->Reset();
+    }
+
+    if (DrawButton("Play/Pause")) {
+        Emu->IsPlaying = !Emu->IsPlaying;
+    }
+
+    if (DrawButton("Step", !Emu->IsPlaying)) {
+        Emu->DoStep();
+    }
+
+    if (DrawButton("Line", !Emu->IsPlaying)) {
+        Emu->DoLine();
+    }
+
+    if (DrawButton("Frame", !Emu->IsPlaying)) {
+        Emu->DoFrame();
+    }
+
+    SetCursor(10, 50);
     DrawRegisters();
 
-    SetCursor(100, 100);
-    if (DrawButton("Suck it")) {
-        printf("Suck it\n");
-    }
+    MoveCursor(0, FONT_LINE_HEIGHT);
+
+    // static int tab = 0;
+    // tab = DrawTabs({ "PIA", "TIA", "RAM" }, tab);
+    // switch (tab) {
+    // case 0:
+    //     DrawPIA();
+    //     break;
+    // case 1:
+    //     DrawTIA();
+    //     break;
+    // case 2:
+    //     DrawRAM();
+    //     break;
+    // }
 
     SDL_RenderPresent(Renderer);
 
@@ -83,8 +115,39 @@ void Debugger::Render()
 
 SDL_Point Debugger::MeasureText(const std::string& text)
 {
-    // TODO: Handle multi-line
-    return { (int)(text.size() * FONT_GLYPH_WIDTH), FONT_LINE_HEIGHT };
+    if (text.empty()) {
+        return { 0, 0 };
+    }
+    
+    int row = 1;
+    int col = 0;
+    int maxRow = row;
+    int maxCol = col;
+    
+    for (char c : text) {
+        if (c == '\n') {
+            if (row >= maxRow) {
+                ++maxRow;
+            }
+            ++row;
+            col = 0;
+        }
+        else {
+            if (col >= maxCol) {
+                ++maxCol;
+            }
+            ++col;
+        }
+    }
+
+    if (text.back() == '\n') {
+        --maxRow;
+    }
+
+    return {
+        maxCol * FONT_GLYPH_WIDTH,
+        maxRow * FONT_LINE_HEIGHT,
+    };
 }
 
 void Debugger::DrawText(const std::string& text)
@@ -128,10 +191,31 @@ void Debugger::DrawText(const std::string& text)
     }
 }
 
-#define PADDING 5
-
-bool Debugger::DrawButton(const std::string& label)
+void Debugger::DrawHeading(const std::string& text)
 {
+    SDL_Point topLeft = Cursor;
+
+    DrawText(text);
+
+    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+    SDL_RenderDrawLine(Renderer,
+        topLeft.x,
+        topLeft.y + FONT_LINE_HEIGHT,
+        Cursor.x,
+        topLeft.y + FONT_LINE_HEIGHT
+    );
+
+    SetCursor(topLeft.x, topLeft.y + (int)(1.5f * FONT_LINE_HEIGHT));
+}
+
+bool Debugger::DrawButton(const std::string& label, bool enabled /*= true*/)
+{
+    constexpr int PADDING = 5;
+
+    if (label.empty()) {
+        return false;
+    }
+
     SDL_Point topLeft = Cursor;
 
     SDL_Point textSize = MeasureText(label);
@@ -139,23 +223,26 @@ bool Debugger::DrawButton(const std::string& label)
     SDL_Rect bounds = {
         .x = topLeft.x,
         .y = topLeft.y,
-        .w = textSize.x + PADDING + PADDING,
-        .h = textSize.y + PADDING + PADDING,
+        .w = textSize.x + (2 * PADDING),
+        .h = textSize.y + (2 * PADDING),
     };
 
     bool hover = SDL_PointInRect(&Mouse, &bounds);
 
-    if (hover) {
-        SDL_SetRenderDrawColor(Renderer, 128, 128, 128, 255);
+    if (!enabled) {
+        SDL_SetRenderDrawColor(Renderer, 0x44, 0x44, 0x44, 0xFF);
+    }
+    else if (hover) {
+        SDL_SetRenderDrawColor(Renderer, 0x88, 0x88, 0x88, 0xFF);
         SDL_SetCursor(HandMouseCursor);
     }
     else {
-        SDL_SetRenderDrawColor(Renderer, 192, 192, 192, 255);
+        SDL_SetRenderDrawColor(Renderer, 0xAA, 0xAA, 0xAA, 0xFF);
     }
 
     SDL_RenderFillRect(Renderer, &bounds);
 
-    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
     SDL_RenderDrawRect(Renderer, &bounds);
 
     MoveCursor(PADDING, PADDING);
@@ -163,15 +250,294 @@ bool Debugger::DrawButton(const std::string& label)
 
     SetCursor(Cursor.x + PADDING + FONT_GLYPH_WIDTH, topLeft.y);
 
+    return (enabled && hover && MouseReleased);
+}
+
+bool Debugger::DrawCheckbox(const std::string& label, bool checked)
+{
+    if (label.empty()) {
+        return false;
+    }
+
+    SDL_Point topLeft = Cursor;
+
+    SDL_Rect checkbox = {
+        .x = topLeft.x + 1,
+        .y = topLeft.y + 1,
+        .w = FONT_LINE_HEIGHT - 2,
+        .h = FONT_LINE_HEIGHT - 2,
+    };
+
+    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+    SDL_RenderDrawRect(Renderer, &checkbox);
+
+    if (checked) {
+        SDL_Rect mark = {
+            .x = checkbox.x + 3,
+            .y = checkbox.y + 3,
+            .w = checkbox.w - 6,
+            .h = checkbox.h - 6,
+        };
+
+        SDL_RenderFillRect(Renderer, &mark);
+    }
+
+    MoveCursor(checkbox.w + FONT_GLYPH_WIDTH, 0);
+
+    SDL_Point textSize = MeasureText(label);
+
+    SDL_Rect bounds = {
+        .x = topLeft.x,
+        .y = topLeft.y,
+        .w = textSize.x + checkbox.w + FONT_GLYPH_WIDTH,
+        .h = textSize.y,
+    };
+
+    bool hover = SDL_PointInRect(&Mouse, &bounds);
+
+    if (hover) {
+        SDL_SetCursor(HandMouseCursor);
+    }
+
+    DrawText(label);
+
+    if (label.back() == '\n') {
+        SetCursor(topLeft.x, Cursor.y + (FONT_LINE_HEIGHT / 2));
+    }
+    else {
+        MoveCursor(FONT_GLYPH_WIDTH, 0);
+    }
+
     return (hover && MouseReleased);
+}
+
+Debugger::TabBar Debugger::BeginTabBar(int width, int height)
+{
+    SDL_Rect bounds = {
+        .x = Cursor.x,
+        .y = Cursor.y + (2 * FONT_LINE_HEIGHT),
+        .w = width,
+        .h = height,
+    };
+
+    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+    SDL_RenderDrawRect(Renderer, &bounds);
+
+    return {
+        .Index = 0,
+        .TopLeft = Cursor,
+        .Size = { width, height },
+    };
+}
+
+bool Debugger::DrawTab(TabBar& tabBar, const std::string& label, int selected)
+{
+    bool isSelected = (selected == tabBar.Index);
+    ++tabBar.Index;
+
+    SDL_Rect bounds = {
+
+    };
+
+    if (isSelected) {
+
+    }
+    else {
+
+    }
+
+    return isSelected;
 }
 
 void Debugger::DrawRegisters()
 {
-    DrawText("[Registers]\n");
+    DrawHeading("Registers");
 
     DrawText(fmt::format(
-        "A={:02X} X={:02X} Y={:02X} SP={:02X} PC={:04X}\n",
-        Emu->A, Emu->X, Emu->Y, Emu->SP, Emu->PC
+        "PC ${0:04X}\n"
+        "SP ${1:02X} #{1:<3d} %{1:08b}\n"
+        "A  ${2:02X} #{2:<3d} %{2:08b}\n"
+        "X  ${3:02X} #{3:<3d} %{3:08b}\n"
+        "Y  ${4:02X} #{4:<3d} %{4:08b}\n",
+        Emu->PC,
+        Emu->SP,
+        Emu->A,
+        Emu->X,
+        Emu->Y
     ));
+
+    DrawText(fmt::format(
+        "SR {}{}-{}{}{}{}{}\n",
+        (Emu->N ? 'N' : '-'),
+        (Emu->V ? 'V' : '-'),
+        (Emu->D ? 'D' : '-'),
+        (Emu->B ? 'B' : '-'),
+        (Emu->I ? 'I' : '-'),
+        (Emu->Z ? 'Z' : '-'),
+        (Emu->C ? 'C' : '-')
+    ));
+}
+
+void Debugger::DrawRAM()
+{
+    const auto& ram = Emu->RAM;
+
+    DrawHeading("RAM");
+
+    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+
+    SDL_RenderDrawLine(Renderer,
+        Cursor.x,
+        Cursor.y + FONT_LINE_HEIGHT - 1,
+        Cursor.x + (51 * FONT_GLYPH_WIDTH),
+        Cursor.y + FONT_LINE_HEIGHT - 1
+    );
+
+    SDL_RenderDrawLine(Renderer,
+        Cursor.x + (int)(2.5f * FONT_GLYPH_WIDTH),
+        Cursor.y - 1,
+        Cursor.x + (int)(2.5f * FONT_GLYPH_WIDTH),
+        Cursor.y + (9 * FONT_LINE_HEIGHT) - 1
+    );
+
+    DrawText("0x 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F\n");
+
+    unsigned row = 0x80;
+    for (int off = 0; off < sizeof(Emu->RAM); off += 16) {
+        DrawText(fmt::format(
+            "{:02X} "
+            "{:02X} {:02X} {:02X} {:02X} "
+            "{:02X} {:02X} {:02X} {:02X} "
+            "{:02X} {:02X} {:02X} {:02X} "
+            "{:02X} {:02X} {:02X} {:02X}\n",
+            row,
+            ram[off + 0x0], ram[off + 0x1], ram[off + 0x2], ram[off + 0x3],
+            ram[off + 0x4], ram[off + 0x5], ram[off + 0x6], ram[off + 0x7],
+            ram[off + 0x8], ram[off + 0x9], ram[off + 0xA], ram[off + 0xB],
+            ram[off + 0xC], ram[off + 0xD], ram[off + 0xE], ram[off + 0xF]
+        ));
+        row += 0x10;
+    }
+}
+
+void Debugger::DrawPIA()
+{
+    DrawHeading("Timer");
+
+    DrawText(fmt::format(
+        "INTIM    {}\n"
+        "TIMINT   {}\n"
+        "Counter #{}\n"
+        "Divider #{}\n",
+        Emu->INTIM,
+        Emu->TIMINT._raw,
+        Emu->TimerCounter,
+        Emu->TimerInterval
+    ));
+}
+
+void Debugger::DrawTIA()
+{
+    DrawHeading("Video");
+
+    DrawCheckbox("WSYNC\n", Emu->WSYNC);
+
+    DrawText(fmt::format(
+        "Scan Line  {}\n"
+        "Scan Cycle {}\n",
+        Emu->MemoryLine,
+        Emu->MemoryColumn
+    ));
+
+    MoveCursor(0, FONT_LINE_HEIGHT);
+
+    SDL_Color colors[] = {
+        Emu->GetColor(Emu->COLUP0.Index),
+        Emu->GetColor(Emu->COLUP1.Index),
+        Emu->GetColor(Emu->COLUPF.Index),
+        Emu->GetColor(Emu->COLUBK.Index),
+    };
+
+    SDL_Rect preview = {
+        .x = Cursor.x + (12 * FONT_GLYPH_WIDTH),
+        .y = Cursor.y + 1,
+        .w = (FONT_LINE_HEIGHT * 2),
+        .h = FONT_LINE_HEIGHT - 2,
+    };
+
+    for (int i = 0; i < 4; ++i) {
+        const auto& color = colors[i];
+
+        SDL_SetRenderDrawColor(Renderer, color.r, color.g, color.g, 0xFF);
+        SDL_RenderFillRect(Renderer, &preview);
+
+        SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+        SDL_RenderDrawRect(Renderer, &preview);
+
+        preview.y += FONT_LINE_HEIGHT;
+    }
+
+    DrawText(fmt::format(
+        "COLUP0 ${:02X}\n"
+        "COLUP1 ${:02X}\n"
+        "COLUPF ${:02X}\n"
+        "COLUBK ${:02X}\n",
+        Emu->COLUP0._raw,
+        Emu->COLUP1._raw,
+        Emu->COLUPF._raw,
+        Emu->COLUBK._raw
+    ));
+
+    MoveCursor(0, FONT_LINE_HEIGHT);
+
+    DrawHeading("I/O");
+
+    DrawText(fmt::format(
+        "SWCHA  %{:08b}\n"
+        "SWACNT %{:08b}\n"
+        "SWCHA  %{:08b}\n"
+        "SWBCNT %{:08b}\n",
+        Emu->SWCHA._raw,
+        Emu->SWACNT,
+        Emu->SWCHB._raw,
+        Emu->SWBCNT
+    ));
+
+    MoveCursor(0, FONT_LINE_HEIGHT);
+
+    DrawHeading("Switches");
+
+    DrawCheckbox("Select\n", !Emu->SWCHB.Select);
+    DrawCheckbox("Reset\n", !Emu->SWCHB.Reset);
+
+    if (DrawCheckbox("P0 DIff\n", Emu->SWCHB.P0DIFF)) {
+        Emu->SWCHB.P0DIFF = !Emu->SWCHB.P0DIFF;
+    }
+
+    if (DrawCheckbox("P1 DIff\n", Emu->SWCHB.P1DIFF)) {
+        Emu->SWCHB.P1DIFF = !Emu->SWCHB.P1DIFF;
+    }
+
+    if (DrawCheckbox("Color\n", Emu->SWCHB.ColorEnabled)) {
+        Emu->SWCHB.ColorEnabled = !Emu->SWCHB.ColorEnabled;
+    }
+
+    MoveCursor(0, FONT_LINE_HEIGHT);
+
+    SDL_Point topLeft = Cursor;
+
+    DrawHeading("P0 Joystick");
+    DrawCheckbox("Up\n", !Emu->SWCHA.P0Up);
+    DrawCheckbox("Down\n", !Emu->SWCHA.P0Down);
+    DrawCheckbox("Left\n", !Emu->SWCHA.P0Left);
+    DrawCheckbox("Right\n", !Emu->SWCHA.P0Right);
+
+    SetCursor(topLeft.x + 100, topLeft.y);
+
+    DrawHeading("P1 Joystick");
+    DrawCheckbox("Up\n", !Emu->SWCHA.P1Up);
+    DrawCheckbox("Down\n", !Emu->SWCHA.P1Down);
+    DrawCheckbox("Left\n", !Emu->SWCHA.P1Left);
+    DrawCheckbox("Right\n", !Emu->SWCHA.P1Right);
+
 }
