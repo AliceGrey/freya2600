@@ -58,8 +58,13 @@ void Emulator::StartDebugger()
 void Emulator::Reset()
 {
     // $FFFC Cartridge Entrypoint
-    PC = ReadWord(0xFFFC);
+    PC = ReadWord(0xFFFC, false);
     printf("Entrypoint: %04X\n", PC);
+    
+    if (Debug) {
+        Debug->Disassemble(PC);
+        Debug->PrintDisassembly();
+    }
 
     SP = 0x00;
     A = 0x00;
@@ -203,7 +208,6 @@ void Emulator::LoadCartridge(const char * filename)
 
     printf("ROM file loaded successfully.\n");
     printf("Number of ROM banks: %d\n", numBanks);
-
 }
 
 void Emulator::Run()

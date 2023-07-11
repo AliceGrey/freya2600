@@ -1,7 +1,11 @@
 #ifndef DEBUGGER_HPP
 #define DEBUGGER_HPP
 
+#include <Config.hpp>
+#include <Disassembly.hpp>
+
 #include <string>
+#include <map>
 
 #include <SDL.h>
 
@@ -81,6 +85,16 @@ public:
     void DrawPIA();
 
     void DrawTIA();
+
+    std::map<word, InstructionRecord> InstructionMap;
+
+    // InstructionRecord * FirstInstruction = nullptr;
+
+    void Disassemble(word address, bool jumped = false);
+
+    void PrintDisassembly();
+    
+    // const char * Disassemble(word address);
 
 }; // class Debugger
 

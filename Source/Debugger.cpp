@@ -1,6 +1,7 @@
 #include "Debugger.hpp"
 #include "Emulator.hpp"
 #include "Font.hpp"
+#include "Utility.hpp"
 
 #include <fmt/format.h>
 
@@ -108,6 +109,33 @@ void Debugger::Render()
         SetCursor(200, 50);
         DrawRAM();
     //     break;
+    // }
+
+    MoveCursor(0, 4 * FONT_LINE_HEIGHT);
+
+    static int logIndex = 0;
+    static char log[30][512];
+
+    static uint64_t lastLogCycle = SDL_MAX_UINT64;
+
+    // if (Emu->CPUCycleCount != lastLogCycle) {
+    //     lastLogCycle = Emu->CPUCycleCount;
+
+    //     const char * disasm = Emu->Disassemble(Emu->PC);
+        
+    //     snprintf(log[logIndex], 512, "%02X ", Emu->ReadByte(Emu->PC, false));
+    //     strncat(log[logIndex], disasm, 512);
+    //     log[logIndex][511] = '\0';
+
+    //     logIndex = (logIndex + 1) % 30;
+    // }
+
+    // for (int i = 0; i < 30; ++i) {
+    //     int index = logIndex - i;
+    //     if (index < 0) {
+    //         index += 30;
+    //     }
+    //     DrawText(fmt::format("{}\n", log[index]));
     // }
 
     SDL_RenderPresent(Renderer);
@@ -565,3 +593,243 @@ void Debugger::DrawTIA()
     DrawCheckbox("Right\n", !Emu->SWCHA.P1Right);
 
 }
+
+void Debugger::Disassemble(word address, bool jumped /*= false*/)
+{
+    printf("Disassembling %04X\n", address);
+
+    auto it = InstructionMap.find(address);
+    if (it != InstructionMap.end()) {
+        if (jumped) {
+            it->second.JumpDestination = true;
+        }
+        
+        return;
+    }
+
+    // InstructionRecord record(Emu, address);
+
+    // Suck it std::map
+    auto [newIt, _] = InstructionMap.emplace(address, InstructionRecord(Emu, address));
+    
+    InstructionRecord& record = newIt->second;
+    
+    if (jumped) {
+        record.JumpDestination = true;
+    }
+
+    // if (!FirstInstruction) {
+    //     FirstInstruction = record;
+    //     goto next; // fuck it
+    // }
+
+    // if (FirstInstruction->Address > address) {
+    //     record.Next = FirstInstruction;
+    //     FirstInstruction->Prev = record;
+    //     FirstInstruction = record;
+    //     goto next;
+    // }
+
+    // ptr = FirstInstruction;
+    // while (ptr->Next) {
+    //     if (ptr->Address < address) {
+    //         if (ptr->Next->Address > address) {
+    //             record.Next = ptr->Next;
+    //             record.Prev = ptr;
+    //             ptr->Next = record;
+    //             goto next;
+    //         }
+    //     }
+
+    //     ptr = ptr->Next;
+    // }
+
+    // ptr->Next = record;
+    // record.Prev = ptr;
+
+// next:
+
+    if (record.Opcodes[0] == 0x40 || // RTI
+        record.Opcodes[0] == 0x60) { // RTS
+        return;
+    }
+    else if (record.Opcodes[0] == 0x00) { // BRK
+        address = Emu->ReadWord(0xFFFE, false);
+        Disassemble(address, true);
+        return;
+    }
+    else if (record.Opcodes[0] == 0x4C) { // JMP Absolute
+        address = (record.Opcodes[2] << 8) | record.Opcodes[1];
+        Disassemble(address, true);
+        return;
+    }
+    else if (record.Opcodes[0] == 0x6C) { // JMP (Absolute)
+        address = (record.Opcodes[2] << 8) | record.Opcodes[1];
+        address = Emu->ReadWord(address, false);
+        Disassemble(address, true);
+        return;
+    }
+    else if (record.Opcodes[0] == 0x20) { // JSR Absolute
+        word dest = (record.Opcodes[2] << 8) | record.Opcodes[1];
+        Disassemble(dest, true);
+    }
+    else if (IsIn(record.Opcodes[0], {
+            0x10, // BPL
+            0x30, // BMI
+            0x50, // BVC
+            0x70, // BVS
+            0x90, // BCC
+            0xB0, // BCS
+            0xD0, // BNE
+            0xF0, // BEQ
+        }))
+    {
+        word dest = address + 2 + (int8_t)record.Opcodes[1];
+        Disassemble(dest, true);
+    }
+
+    address += record.Definition->ByteCount;
+    Disassemble(address);
+}
+
+
+void Debugger::PrintDisassembly()
+{
+    word entrypoint = Emu->ReadWord(0xFFFC, false);
+    word interrupt = Emu->ReadWord(0xFFFE, false);
+
+    // InstructionRecord * ptr = FirstInstruction;
+    // while (ptr) {
+    
+    for (auto& [address, inst] : InstructionMap) {
+        if (address == entrypoint) {
+            printf("START:  ");
+        }
+        else if (address == interrupt) {
+            printf("BREAK:  ");
+        }
+        else if (inst.JumpDestination) {
+            printf("%04X:   ", address);
+        }
+        else {
+            printf("        ");
+        }
+
+        printf("%s\n", inst.ToString());
+        
+        if (IsIn(inst.Opcodes[0], {
+                0x00, // BRK
+                0x4C, // JMP Absolute
+                0x6C, // JMP (Absolute)
+                0x40, // RTI
+                0x60, // RTS
+            }))
+        {
+            printf("\n");
+        }
+
+        // ptr = ptr->Next;
+    }
+}
+
+// const char * Debugger::Disassemble(word address)
+// {   
+//     // TODO: Remove duplicate reads
+//     byte d0 = Emu->ReadByte(address + 0, false);
+//     byte d1 = Emu->ReadByte(address + 1, false);
+//     byte d2 = Emu->ReadByte(address + 2, false);
+
+//     DisassembledInstruction disasm = {
+//         .address = address,
+//         .opcode = { d0, d1, d2 },
+//     };
+
+//     const auto& inst = INSTRUCTIONS[d0];
+
+//     static char disassembly[1024];
+
+//     memset(disassembly, 0, sizeof(disassembly));
+//     fmt::format_to_n(disassembly, sizeof(disassembly), fmt::runtime(inst.format), d1, d2, address + (int8_t)d1 + inst.bytes);
+
+//     return disassembly;
+// }
+
+// void Debugger::printRegisters()
+// {	
+//     // TODO: Remove duplicate reads
+//     byte d0 = ReadByte(LastInstructionAddress + 0, false);
+//     byte d1 = ReadByte(LastInstructionAddress + 1, false);
+//     byte d2 = ReadByte(LastInstructionAddress + 2, false);
+
+//     const auto& inst = INSTRUCTIONS[d0];
+
+//     char disassembly[1024];
+
+//     memset(disassembly, 0, sizeof(disassembly));
+//     fmt::format_to_n(disassembly, sizeof(disassembly), fmt::runtime(inst.format), d1, d2, LastInstructionAddress + (int8_t)d1 + inst.bytes);
+
+// /*
+// 				fprintf(zlog, "\n(%3d %3d %3d) (%3d %3d) (%3d %3d %3d %3d %3d) ",
+// 					 (int)frame, line, cycle, line-42, cycle*3-68,
+// 					 (P0_Pos-68+5)%160, (P1_Pos-68+5)%160, (M0_Pos-68+4)%160,
+// 					 (M1_Pos-68+4)%160, (BL_Pos-68+4)%160);
+// */
+//     int P0_Position = 0;
+//     int P1_Position = 0;
+//     int M0_Position = 0;
+//     int M1_Position = 0;
+//     int BL_Position = 0;
+//     int TIACollide = 0;
+//     byte B = 1;
+
+// 	int sline = 0;
+// 	int cyc = CPUCycleCount;
+// 	int clk = CPUCycleCount*3-68;
+// 	if (cyc == 76)
+// 	{
+// 		cyc -= 76;
+// 		clk -= 228;
+// 		sline++;
+// 	}
+
+// 	fprintf(tLog,
+//         "(%05x %4d %3d %3d)  (%3d %3d %3d %3d %3d)  <%4x>  ",
+// 		(int)INTIM,
+//         MemoryLine + 1,
+//         (int)(CPUCycleCount - LastWSYNC),
+//         (int)TIACycleCount,
+// 		(P0_Position - 68 + 5) % 160,
+//         (P1_Position - 68 + 5) % 160,
+//         (M0_Position - 68 + 4) % 160,
+// 		(M1_Position - 68 + 4) % 160,
+//         (BL_Position - 68 + 4) % 160,
+//         TIACollide
+//     );
+
+// 	fprintf(tLog, "%c%c%c%c%c%c%c ",
+//         N ? 'N' : 'n',
+// 	    V ? 'V' : 'v',
+// 	    B ? 'B' : 'b',
+// 	    D ? 'D' : 'd',
+// 	    I ? 'I' : 'i',
+// 	    Z ? 'Z' : 'z',
+// 	    C ? 'C' : 'c'
+//     );
+
+//     fprintf(tLog, "%02x %02x %02x %02x  ", A, X, Y, SP);
+//     fprintf(tLog, "%04x: ", LastInstructionAddress);
+//     //fprintf(tLog, "%02x       ", opcode);
+
+//     if (inst.bytes == 1) {
+//         fprintf(tLog, "%02x       ", d0);
+//     }
+//     else if (inst.bytes == 2) {
+//         fprintf(tLog, "%02x %02x    ", d0, d1);
+//     }
+//     else if (inst.bytes == 3) {
+//         fprintf(tLog, "%02x %02x %02x ", d0, d1, d2);
+//     }
+
+//     fprintf(tLog, "%s\n", Disassemble(LastInstructionAddress));
+//     fflush(tLog);
+// }

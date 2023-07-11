@@ -245,7 +245,7 @@ public:
 
     void WriteByte(word address, byte data);
 
-    const char * Disassemble(word address);
+    // const char * Disassemble(word address);
 
     SDL_Color GetColor(uint8_t index);
 
@@ -253,7 +253,7 @@ public:
 
     void printTraceLogHeaders(const char* filename);
 
-    void printRegisters();
+    // void printRegisters();
 
     inline byte NextByte() {
         return ReadByte(PC++);
@@ -265,9 +265,9 @@ public:
         return (upper << 8) | lower;
     }
 
-    inline word ReadWord(word address) {
-        byte lower = ReadByte(address);
-        byte upper = ReadByte(address + 1);
+    inline word ReadWord(word address, bool tick = true) {
+        byte lower = ReadByte(address, tick);
+        byte upper = ReadByte(address + 1, tick);
         return (upper << 8) | lower;
     }
 
