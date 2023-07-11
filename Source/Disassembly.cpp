@@ -295,7 +295,7 @@ const char * InstructionRecord::ToString()
         it = fmt::format_to(it, "{:02X} {:02X} {:02X} ", Opcodes[0], Opcodes[1], Opcodes[2]);
     }
 
-    fmt::format_to(it, Definition->Format, Opcodes[1], Opcodes[2], Address + 2 + (int8_t)Opcodes[1]);
+    fmt::format_to(it, fmt::runtime(Definition->Format), Opcodes[1], Opcodes[2], Address + 2 + (int8_t)Opcodes[1]);
 
     return buffer;
 }
