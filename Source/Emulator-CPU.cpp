@@ -11,13 +11,12 @@ void Emulator::TickCPU()
         return;
     }
 
-    LastInstructionAddress = PC;
-
-    static unsigned index = 0;
-    // if (index > 894) {
-        // printRegisters();
-    // }
-    ++index;
+    uint16_t checkAddress = (PC & ADDRESS_MASK);
+    if (Debug && Debug->Breakpoint == PC) {
+        IsPlaying = false;
+        IsDrawing = false;
+        Debug->Breakpoint = -1;
+    }
 
     OperationCode opcode = { ._raw = NextByte() };
 
@@ -31,8 +30,6 @@ void Emulator::TickCPU()
     byte small_result; // The 8-bit result of 8-bit math
 
     bool found = true;
-
-    //printf("PC=%04X OP=%02X inst=%d mode=%d group=%d\n", PC - 1, opcode._raw, opcode.inst, opcode.mode, opcode.group);
 
     switch (opcode._raw) {
     // BRK (Break Command, Software Interrupt)

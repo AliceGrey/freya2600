@@ -10,7 +10,7 @@ uint8_t Emulator::ReadByte(word address, bool tick /*= true*/)
     }
 
     // bit mask
-    address = (address & 0b0001'1111'1111'1111);
+    address = (address & ADDRESS_MASK);
 
     //printf("ReadByte Address: 0x%04X\n", address);
 
@@ -139,7 +139,7 @@ void Emulator::WriteByte(word address, byte data)
 {
     ++CPUCycleCount;
 
-    address = (address & 0b0001'1111'1111'1111);
+    address = (address & ADDRESS_MASK);
 
     // TIA Chip
     // $00 - $7F TIA

@@ -43,3 +43,11 @@ target_link_libraries(
         SDL2::SDL2main
         fmt::fmt
 )
+
+if (WIN32)
+    add_compile_definitions(
+        Freya2600
+        PRIVATE
+            _CRT_SECURE_NO_WARNINGS
+    )
+endif()

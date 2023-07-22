@@ -37,7 +37,8 @@ font_glyph_width = 0
 with Image(width=len(glyphs) * font_size, height=font_size, background=Color('transparent')) as image:
     with Drawing() as drawing:
         drawing.font = ttf_file
-        drawing.fill_color = Color('black')
+        drawing.font_size = font_size
+        drawing.fill_color = Color('white')
 
         metrics = drawing.get_font_metrics(image, ' ')
         font_glyph_width = int(metrics.text_width)

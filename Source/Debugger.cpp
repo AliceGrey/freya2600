@@ -9,6 +9,9 @@ Debugger::Debugger(Emulator * emu)
 {
     Emu = emu;
 
+    constexpr int WIDTH = 1024;
+    constexpr int HEIGHT = 768; 
+
     SDL_Rect mainWindow;
     SDL_GetWindowSize(Emu->Window, &mainWindow.w, &mainWindow.h);
     SDL_GetWindowPosition(Emu->Window, &mainWindow.x, &mainWindow.y);
@@ -17,8 +20,8 @@ Debugger::Debugger(Emulator * emu)
         "Freya2600 - Debugger",
         mainWindow.x + mainWindow.w,
         100,
-        1024,
-        768,
+        WIDTH,
+        HEIGHT,
         SDL_WINDOW_RESIZABLE
     );
 
@@ -32,13 +35,33 @@ Debugger::Debugger(Emulator * emu)
     FontTexture = SDL_CreateTextureFromSurface(Renderer, fontSurface);
 
     SDL_FreeSurface(fontSurface);
+    
+    SetTextColor(COLOR_TEXT);
 
     DefaultMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     HandMouseCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+
+    // Calling SDL_SetRenderTarget(Renderer, nullptr) will render to the window
+    RenderTargets[0] = nullptr;
+
+    for (unsigned i = 0; i < MAX_RENDER_DEPTH; ++i) {
+        RenderTargets[i + 1] = SDL_CreateTexture(
+            Renderer,
+            SDL_PIXELFORMAT_RGBA32,
+            SDL_TEXTUREACCESS_TARGET,
+            WIDTH,
+            HEIGHT
+        );
+    }
 }
 
 Debugger::~Debugger()
 {
+    for (unsigned i = 0; i < MAX_RENDER_DEPTH; ++i) {
+        SDL_DestroyTexture(RenderTargets[i + 1]);
+        RenderTargets[i + 1] = nullptr;
+    }
+
     SDL_FreeCursor(HandMouseCursor);
     SDL_FreeCursor(DefaultMouseCursor);
 
@@ -51,12 +74,16 @@ void Debugger::HandleEvent(SDL_Event * event)
     switch (event->type)
     {
     case SDL_MOUSEMOTION:
-        Mouse.x = event->motion.x;
-        Mouse.y = event->motion.y;
+        if (event->motion.windowID == WindowID) {
+            Mouse.x = event->motion.x;
+            Mouse.y = event->motion.y;
+        }
         break;
     case SDL_MOUSEBUTTONUP:
-        if (event->button.button == SDL_BUTTON_LEFT) {
-            MouseReleased = true;
+        if (event->button.windowID == WindowID) {
+            if (event->button.button == SDL_BUTTON_LEFT) {
+                MouseReleased = true;
+            }
         }
         break;
     }
@@ -67,8 +94,9 @@ void Debugger::Render()
     // Cursor as in the icon your mouse uses
     SDL_SetCursor(DefaultMouseCursor);
 
-    SDL_SetRenderDrawColor(Renderer, 255, 255, 255, 255);
+    SetDrawColor(COLOR_BACKGROUND);
     SDL_RenderClear(Renderer);
+
     //Cursor as in where to draw
     SetCursor(10, 10);
     if (DrawButton("Reset")) {
@@ -93,50 +121,137 @@ void Debugger::Render()
 
     SetCursor(10, 50);
     DrawRegisters();
+    
+    MoveCursor(0, FONT_LINE_HEIGHT);
+    DrawIO();
+
+    SetCursor(250, 50);
+    DrawTimer();
+
+    MoveCursor(0, FONT_LINE_HEIGHT);
+    DrawVideo();
+
+    SetCursor(450, 50);
+    DrawRAM();
 
     MoveCursor(0, FONT_LINE_HEIGHT);
 
-    // static int tab = 0;
-    // tab = DrawTabs({ "PIA", "TIA", "RAM" }, tab);
-    // switch (tab) {
-    // case 0:
-        DrawPIA();
-    //     break;
-    // case 1:
-        DrawTIA();
-    //     break;
-    // case 2:
-        SetCursor(200, 50);
-        DrawRAM();
-    //     break;
-    // }
+    DrawHeading("Disassembly");
+    const auto& panel = BeginPanel(400, 450);
 
-    MoveCursor(0, 4 * FONT_LINE_HEIGHT);
+    // TODO: Improve
+    SDL_Point panelMouse = Mouse;
+    panelMouse.x -= panel.TopLeft.x;
+    panelMouse.y -= panel.TopLeft.y;
+    
+    word entrypoint = Emu->ReadWord(0xFFFC, false);
+    word interrupt = Emu->ReadWord(0xFFFE, false);
 
-    static int logIndex = 0;
-    static char log[30][512];
+    uint16_t searchAddress = (Emu->PC & ADDRESS_MASK);
 
-    static uint64_t lastLogCycle = SDL_MAX_UINT64;
+    bool addressFound = false;
+    int addressOffset = 0;
+    for (auto& [address, inst] : InstructionMap) {
+        if (address == Emu->PC) {
+            addressFound = true;
+            break;
+        }
 
-    // if (Emu->CPUCycleCount != lastLogCycle) {
-    //     lastLogCycle = Emu->CPUCycleCount;
-
-    //     const char * disasm = Emu->Disassemble(Emu->PC);
+        addressOffset += FONT_LINE_HEIGHT;
         
-    //     snprintf(log[logIndex], 512, "%02X ", Emu->ReadByte(Emu->PC, false));
-    //     strncat(log[logIndex], disasm, 512);
-    //     log[logIndex][511] = '\0';
+        if (IsIn(inst.Opcodes[0], {
+                0x00, // BRK
+                0x4C, // JMP Absolute
+                0x6C, // JMP (Absolute)
+                0x40, // RTI
+                0x60, // RTS
+            }))
+        {
+            addressOffset += FONT_LINE_HEIGHT;
+        }
+    }
 
-    //     logIndex = (logIndex + 1) % 30;
-    // }
+    if (!addressFound) {
+        printf("Unknown address %04X\n", searchAddress);
+    }
 
-    // for (int i = 0; i < 30; ++i) {
-    //     int index = logIndex - i;
-    //     if (index < 0) {
-    //         index += 30;
-    //     }
-    //     DrawText(fmt::format("{}\n", log[index]));
-    // }
+    static int scroll = 0;
+
+    while (addressOffset < scroll) {
+        scroll -= FONT_LINE_HEIGHT;
+    }
+
+    while (addressOffset > (scroll + 400)) {
+        scroll += FONT_LINE_HEIGHT;
+    }
+
+    SetCursor(0, -scroll);
+
+    char buffer[1024];
+    unsigned limit = 30;
+    for (auto& [address, inst] : InstructionMap) {
+        strcpy(buffer, "     ");
+
+        if (address == Breakpoint) {
+            buffer[1] = '*';
+        }
+
+        if (address == Emu->PC) {
+            buffer[3] = '>';
+        }
+
+        if (address == entrypoint) {
+            strcat(buffer, "START:  ");
+        }
+        else if (address == interrupt) {
+            strcat(buffer, "BREAK:  ");
+        }
+        else if (inst.JumpDestination) {
+            sprintf(buffer + 5, "%04X:   ", address);
+        }
+        else {
+            strcat(buffer, "        ");
+        }
+
+        strcat(buffer, inst.ToString());
+        strcat(buffer, "\n");
+        
+        if (IsIn(inst.Opcodes[0], {
+                0x00, // BRK
+                0x4C, // JMP Absolute
+                0x6C, // JMP (Absolute)
+                0x40, // RTI
+                0x60, // RTS
+            }))
+        {
+            strcat(buffer, "\n");
+        }
+
+        if (Cursor.y >= 0) {
+            SDL_Rect bounds = {
+                .x = Cursor.x,
+                .y = Cursor.y,
+                .w = 350,
+                .h = FONT_LINE_HEIGHT,
+            };
+
+            if (SDL_PointInRect(&panelMouse, &bounds)) {
+                SetTextColor(COLOR_TEXT_DISABLED);
+                SDL_RenderFillRect(Renderer, &bounds);
+
+                if (MouseReleased) {
+                    Breakpoint = address;
+                }
+            }
+            else {
+                SetTextColor(COLOR_TEXT);
+            }
+        }
+
+        DrawText(buffer);
+    }
+
+    EndPanel(panel);
 
     SDL_RenderPresent(Renderer);
 
@@ -227,7 +342,7 @@ void Debugger::DrawHeading(const std::string& text)
 
     DrawText(text);
 
-    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+    SetDrawColor(COLOR_TEXT);
     SDL_RenderDrawLine(Renderer,
         topLeft.x,
         topLeft.y + FONT_LINE_HEIGHT,
@@ -260,25 +375,27 @@ bool Debugger::DrawButton(const std::string& label, bool enabled /*= true*/)
     bool hover = SDL_PointInRect(&Mouse, &bounds);
 
     if (!enabled) {
-        SDL_SetRenderDrawColor(Renderer, 0x44, 0x44, 0x44, 0xFF);
+        SetTextColor(COLOR_TEXT_DISABLED);
+        SetDrawColor(COLOR_BUTTON_DISABLED);
     }
     else if (hover) {
-        SDL_SetRenderDrawColor(Renderer, 0x88, 0x88, 0x88, 0xFF);
+        SetDrawColor(COLOR_BUTTON_HOVER);
         SDL_SetCursor(HandMouseCursor);
     }
     else {
-        SDL_SetRenderDrawColor(Renderer, 0xAA, 0xAA, 0xAA, 0xFF);
+        SetDrawColor(COLOR_BUTTON);
     }
 
     SDL_RenderFillRect(Renderer, &bounds);
 
-    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+    SetDrawColor(COLOR_BORDER);
     SDL_RenderDrawRect(Renderer, &bounds);
 
     MoveCursor(PADDING, PADDING);
     DrawText(label);
 
     SetCursor(Cursor.x + PADDING + FONT_GLYPH_WIDTH, topLeft.y);
+    SetTextColor(COLOR_TEXT);
 
     return (enabled && hover && MouseReleased);
 }
@@ -298,22 +415,6 @@ bool Debugger::DrawCheckbox(const std::string& label, bool checked)
         .h = FONT_LINE_HEIGHT - 2,
     };
 
-    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
-    SDL_RenderDrawRect(Renderer, &checkbox);
-
-    if (checked) {
-        SDL_Rect mark = {
-            .x = checkbox.x + 3,
-            .y = checkbox.y + 3,
-            .w = checkbox.w - 6,
-            .h = checkbox.h - 6,
-        };
-
-        SDL_RenderFillRect(Renderer, &mark);
-    }
-
-    MoveCursor(checkbox.w + FONT_GLYPH_WIDTH, 0);
-
     SDL_Point textSize = MeasureText(label);
 
     SDL_Rect bounds = {
@@ -324,6 +425,29 @@ bool Debugger::DrawCheckbox(const std::string& label, bool checked)
     };
 
     bool hover = SDL_PointInRect(&Mouse, &bounds);
+
+    SetDrawColor(COLOR_BORDER);
+    SDL_RenderDrawRect(Renderer, &checkbox);
+
+    if (checked) {
+        SDL_Rect mark = {
+            .x = checkbox.x + 3,
+            .y = checkbox.y + 3,
+            .w = checkbox.w - 6,
+            .h = checkbox.h - 6,
+        };
+
+        if (hover) {
+            SetDrawColor(COLOR_BUTTON_HOVER);
+        }
+        else {
+            SetDrawColor(COLOR_BUTTON);
+        }
+
+        SDL_RenderFillRect(Renderer, &mark);
+    }
+
+    MoveCursor(checkbox.w + FONT_GLYPH_WIDTH, 0);
 
     if (hover) {
         SDL_SetCursor(HandMouseCursor);
@@ -341,6 +465,86 @@ bool Debugger::DrawCheckbox(const std::string& label, bool checked)
     return (hover && MouseReleased);
 }
 
+Debugger::Panel Debugger::BeginPanel(int width, int height)
+{
+    constexpr int PADDING = 5;
+
+    ++CurrentRenderTarget;
+    if (CurrentRenderTarget > MAX_RENDER_DEPTH) {
+        // freak out?
+    }
+
+    SDL_SetRenderTarget(Renderer, RenderTargets[CurrentRenderTarget]);
+
+    SetDrawColor(COLOR_BACKGROUND);
+    SDL_RenderClear(Renderer);
+
+    SDL_Point topLeft = Cursor;
+
+    // Relative to the render target texture
+    SetCursor(0, 0);
+
+    return {
+        .TopLeft = topLeft,
+        .Size = {
+            width,
+            height,
+        }
+    };
+}
+
+void Debugger::EndPanel(const Debugger::Panel& panel)
+{
+    constexpr int PADDING = 5;
+
+    SetCursor(panel.TopLeft.x, panel.TopLeft.y + panel.Size.y + FONT_LINE_HEIGHT);
+
+    unsigned renderSource = CurrentRenderTarget;
+
+    if (CurrentRenderTarget == 0) {
+        // freak out?
+    }
+    --CurrentRenderTarget;
+
+    SDL_SetRenderTarget(Renderer, RenderTargets[CurrentRenderTarget]);
+
+    SDL_Point innerSize = {
+        .x = panel.Size.x - (PADDING * 2),
+        .y = panel.Size.y - (PADDING * 2),
+    };
+
+    SDL_Rect src = {
+        .x = 0,
+        .y = 0,
+        .w = innerSize.x,
+        .h = innerSize.y,
+    };
+
+    SDL_Rect dst = {
+        .x = panel.TopLeft.x + PADDING,
+        .y = panel.TopLeft.y + PADDING,
+        .w = innerSize.x,
+        .h = innerSize.y,
+    };
+
+    SDL_RenderCopy(
+        Renderer,
+        RenderTargets[renderSource],
+        &src,
+        &dst
+    );
+
+    SDL_Rect border = {
+        .x = panel.TopLeft.x,
+        .y = panel.TopLeft.y,
+        .w = panel.Size.x,
+        .h = panel.Size.y,
+    };
+
+    SetDrawColor(COLOR_BORDER);
+    SDL_RenderDrawRect(Renderer, &border);
+}
+
 Debugger::TabBar Debugger::BeginTabBar(int width, int height)
 {
     SDL_Rect bounds = {
@@ -350,7 +554,7 @@ Debugger::TabBar Debugger::BeginTabBar(int width, int height)
         .h = height,
     };
 
-    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+    SetDrawColor(COLOR_BORDER);
     SDL_RenderDrawRect(Renderer, &bounds);
 
     return {
@@ -414,7 +618,8 @@ void Debugger::DrawRAM()
 
     DrawHeading("RAM");
 
-    SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+    SetDrawColor(COLOR_RAM_ADDRESS);
+    SetTextColor(COLOR_RAM_ADDRESS);
 
     SDL_RenderDrawLine(Renderer,
         Cursor.x,
@@ -445,29 +650,34 @@ void Debugger::DrawRAM()
         stack.x += col * 3 * FONT_GLYPH_WIDTH;
         stack.y += row * FONT_LINE_HEIGHT;
 
-        SDL_SetRenderDrawColor(Renderer, 0x00, 0x00, 0x00, 0xFF);
+        SetDrawColor(COLOR_BORDER);
         SDL_RenderDrawRect(Renderer, &stack);
     }
 
-    unsigned row = 0x80;
+    SDL_Point innerGrid = Cursor;
+
+    DrawText("80\n90\nA0\nB0\nC0\nD0\nE0\nF0");
+
+    SetCursor(innerGrid.x, innerGrid.y);
+    
+    SetTextColor(COLOR_TEXT);
+    
     for (int off = 0; off < sizeof(Emu->RAM); off += 16) {
         DrawText(fmt::format(
-            "{:02X} "
+            "   "
             "{:02X} {:02X} {:02X} {:02X} "
             "{:02X} {:02X} {:02X} {:02X} "
             "{:02X} {:02X} {:02X} {:02X} "
             "{:02X} {:02X} {:02X} {:02X}\n",
-            row,
             ram[off + 0x0], ram[off + 0x1], ram[off + 0x2], ram[off + 0x3],
             ram[off + 0x4], ram[off + 0x5], ram[off + 0x6], ram[off + 0x7],
             ram[off + 0x8], ram[off + 0x9], ram[off + 0xA], ram[off + 0xB],
             ram[off + 0xC], ram[off + 0xD], ram[off + 0xE], ram[off + 0xF]
         ));
-        row += 0x10;
     }
 }
 
-void Debugger::DrawPIA()
+void Debugger::DrawTimer()
 {
     DrawHeading("Timer");
 
@@ -483,7 +693,7 @@ void Debugger::DrawPIA()
     ));
 }
 
-void Debugger::DrawTIA()
+void Debugger::DrawVideo()
 {
     DrawHeading("Video");
 
@@ -515,10 +725,10 @@ void Debugger::DrawTIA()
     for (int i = 0; i < 4; ++i) {
         const auto& color = colors[i];
 
-        SDL_SetRenderDrawColor(Renderer, color.r, color.g, color.g, 0xFF);
+        SetDrawColor(color);
         SDL_RenderFillRect(Renderer, &preview);
 
-        SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 0xFF);
+        SetDrawColor(COLOR_BORDER);
         SDL_RenderDrawRect(Renderer, &preview);
 
         preview.y += FONT_LINE_HEIGHT;
@@ -534,8 +744,10 @@ void Debugger::DrawTIA()
         Emu->COLUPF._raw,
         Emu->COLUBK._raw
     ));
+}
 
-    MoveCursor(0, FONT_LINE_HEIGHT);
+void Debugger::DrawIO()
+{
 
     DrawHeading("I/O");
 
@@ -584,7 +796,7 @@ void Debugger::DrawTIA()
     DrawCheckbox("Left\n", !Emu->SWCHA.P0Left);
     DrawCheckbox("Right\n", !Emu->SWCHA.P0Right);
 
-    SetCursor(topLeft.x + 100, topLeft.y);
+    SetCursor(topLeft.x + (12 * FONT_GLYPH_WIDTH), topLeft.y);
 
     DrawHeading("P1 Joystick");
     DrawCheckbox("Up\n", !Emu->SWCHA.P1Up);
@@ -596,7 +808,7 @@ void Debugger::DrawTIA()
 
 void Debugger::Disassemble(word address, bool jumped /*= false*/)
 {
-    printf("Disassembling %04X\n", address);
+    // printf("Disassembling %04X\n", address);
 
     auto it = InstructionMap.find(address);
     if (it != InstructionMap.end()) {
@@ -691,7 +903,6 @@ void Debugger::Disassemble(word address, bool jumped /*= false*/)
     address += record.Definition->ByteCount;
     Disassemble(address);
 }
-
 
 void Debugger::PrintDisassembly()
 {

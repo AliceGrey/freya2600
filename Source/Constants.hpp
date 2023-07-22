@@ -9,6 +9,7 @@ constexpr size_t ROM_HALF_BANK_SIZE = ROM_BANK_SIZE / 2;
 constexpr size_t MAX_BANKS = 8;
 constexpr size_t BANK_SWITCH_ADDRESS = 0x1000;
 
+constexpr uint16_t ADDRESS_MASK = 0b0001'1111'1111'1111;
 
 constexpr size_t SCREEN_WIDTH = 160;
 constexpr size_t SCREEN_HEIGHT = 192;

@@ -63,7 +63,7 @@ void Emulator::Reset()
     
     if (Debug) {
         Debug->Disassemble(PC);
-        Debug->PrintDisassembly();
+        // Debug->PrintDisassembly();
     }
 
     SP = 0x00;
@@ -316,8 +316,8 @@ void Emulator::DoStep()
 
 void Emulator::DoLine()
 {
-    bool drawing = true;
-    while (drawing) {
+    IsDrawing = true;
+    while (IsDrawing) {
 
         uint64_t beforeInstCycles = CPUCycleCount;
         
@@ -335,7 +335,7 @@ void Emulator::DoLine()
             TickTIA();
 
             if (MemoryLine != lastMemoryLine) {
-                drawing = false;
+                IsDrawing = false;
             }
         }
     }
@@ -343,8 +343,8 @@ void Emulator::DoLine()
 
 void Emulator::DoFrame()
 {
-    bool drawing = true;
-    while (drawing) {
+    IsDrawing = true;
+    while (IsDrawing) {
 
         uint64_t beforeInstCycles = CPUCycleCount;
         
@@ -362,7 +362,7 @@ void Emulator::DoFrame()
             TickTIA();
 
             if (MemoryLine == 0 && MemoryLine != lastMemoryLine) {
-                drawing = false;
+                IsDrawing = false;
             }
         }
     }

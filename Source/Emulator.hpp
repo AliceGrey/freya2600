@@ -64,10 +64,6 @@ public:
         byte SR;
     };
 
-    word LastInstructionAddress;
-
-    byte FetchCache[3];
-
     ///
     /// RAM I/O Timer / RIOT
     /// Peripheral Interface Adaptor / PIA
@@ -187,6 +183,7 @@ public:
     byte EXTRAM[0x100];
     
     bool IsPlaying;
+    bool IsDrawing;
 
     SDL_Window * Window = nullptr;
 
