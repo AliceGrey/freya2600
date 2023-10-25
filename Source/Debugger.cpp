@@ -136,8 +136,11 @@ void Debugger::Render()
 
     MoveCursor(0, FONT_LINE_HEIGHT);
 
+    constexpr int DISASM_PANEL_WIDTH = 500;
+    constexpr int DISASM_PANEL_HEIGHT = 450;
+
     DrawHeading("Disassembly");
-    const auto& panel = BeginPanel(400, 450);
+    const auto& panel = BeginPanel(DISASM_PANEL_WIDTH, DISASM_PANEL_HEIGHT);
 
     // TODO: Improve
     SDL_Point panelMouse = Mouse;
@@ -149,15 +152,16 @@ void Debugger::Render()
 
     uint16_t searchAddress = (Emu->PC & ADDRESS_MASK);
 
+    int disasmHeight = 0;
     bool addressFound = false;
     int addressOffset = 0;
     for (auto& [address, inst] : InstructionMap) {
         if (address == Emu->PC) {
             addressFound = true;
-            break;
+            addressOffset = disasmHeight;
         }
-
-        addressOffset += FONT_LINE_HEIGHT;
+        
+        disasmHeight += FONT_LINE_HEIGHT;
         
         if (IsIn(inst.Opcodes[0], {
                 0x00, // BRK
@@ -167,7 +171,7 @@ void Debugger::Render()
                 0x60, // RTS
             }))
         {
-            addressOffset += FONT_LINE_HEIGHT;
+            disasmHeight += FONT_LINE_HEIGHT;
         }
     }
 
@@ -250,6 +254,19 @@ void Debugger::Render()
 
         DrawText(buffer);
     }
+
+    int scrollbarOffset = scroll / DISASM_PANEL_HEIGHT;
+    int scrollbarHeight = disasmHeight / DISASM_PANEL_HEIGHT;
+
+    SDL_Rect scrollbar = {
+        .x = DISASM_PANEL_WIDTH - 20,
+        .y = scrollbarOffset,
+        .w = 20,
+        .h = scrollbarHeight,
+    };
+
+    SetDrawColor(COLOR_BORDER);
+    SDL_RenderFillRect(Renderer, &scrollbar);
 
     EndPanel(panel);
 
@@ -623,9 +640,9 @@ void Debugger::DrawRAM()
 
     SDL_RenderDrawLine(Renderer,
         Cursor.x,
-        Cursor.y + FONT_LINE_HEIGHT - 1,
+        Cursor.y + FONT_LINE_HEIGHT - 2,
         Cursor.x + (51 * FONT_GLYPH_WIDTH),
-        Cursor.y + FONT_LINE_HEIGHT - 1
+        Cursor.y + FONT_LINE_HEIGHT - 2
     );
 
     SDL_RenderDrawLine(Renderer,
